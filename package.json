@@ -10,7 +10,8 @@
     "ios": "expo start --ios",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "build": "expo export --platform android --output-dir dist"
   },
   "dependencies": {
     "expo": "~51.0.0",
