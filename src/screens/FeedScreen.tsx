@@ -1,10 +1,12 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React from "react";
+import React, { useEffect } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { OfferCard } from "../components/OfferCard";
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
+import { DEFAULT_USER_ID } from "../config";
 import { sortOffersByScore } from "../lib/feed";
+import { registerForPushToken } from "../lib/push";
 import { useAsync } from "../lib/useAsync";
 import type { OfferOut } from "../model/types";
 import type { RootStackParamList } from "../navigation";
@@ -15,6 +17,17 @@ type Props = NativeStackScreenProps<RootStackParamList, "Feed">;
 export function FeedScreen({ navigation }: Props): React.ReactElement {
   const { client } = useSession();
   const { state, reload } = useAsync<OfferOut[]>(() => client.listOffers({ min_grade: "B" }), []);
+
+  // Auto-rejestracja urządzenia do push (raz, po wejściu). Cicho pomija, gdy się nie uda.
+  useEffect(() => {
+    let alive = true;
+    void registerForPushToken().then((token) => {
+      if (alive && token) void client.registerDevice(DEFAULT_USER_ID, "expo", token).catch(() => {});
+    });
+    return () => {
+      alive = false;
+    };
+  }, [client]);
 
   return (
     <View style={styles.container}>

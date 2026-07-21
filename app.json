@@ -10,6 +10,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": { "supportsTablet": true },
     "android": { "adaptiveIcon": { "backgroundColor": "#0f172a" } },
+    "plugins": ["expo-notifications"],
     "extra": {
       "apiBaseUrl": "http://localhost:8000"
     }

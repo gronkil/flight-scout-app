@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 
 import { ApiClient } from "../api/client";
-import { resolveBaseUrl } from "../config";
+import { configuredBaseUrl } from "../config";
 
 interface SessionValue {
   baseUrl: string;
@@ -17,7 +17,7 @@ interface SessionValue {
 const SessionContext = createContext<SessionValue | null>(null);
 
 export function SessionProvider({ children }: { children: React.ReactNode }): React.ReactElement {
-  const [baseUrl, setBaseUrl] = useState<string>(resolveBaseUrl());
+  const [baseUrl, setBaseUrl] = useState<string>(configuredBaseUrl());
   const [token, setToken] = useState<string | null>(null);
 
   const client = useMemo(

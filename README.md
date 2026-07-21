@@ -37,8 +37,15 @@ Domyślny adres API: `http://localhost:8000` (edytowalny na ekranie logowania). 
 - Zero sekretów w kliencie; komunikacja tylko z naszym API.
 - Stany ładowania/błędu/pustki i podstawy dostępności (etykiety, role) w komponentach.
 
+## Push
+Aplikacja **sama rejestruje** urządzenie do powiadomień przy pierwszym wejściu do feedu
+(`expo-notifications`, po zgodzie). Token trafia do backendu przez `POST /devices` dla
+użytkownika `owner` — tego samego, którego używa worker. Na emulatorze/bez zgody push jest
+cicho pomijany.
+
 ## Zakres i dalsze kroki
 Zrealizowane: logowanie (adres+token), feed ofert (A/B, powrót, flex, deeplinki),
 szczegóły oferty (Lot tam / Powrót), profile (lista/tworzenie/„szukaj teraz”),
-alerty (PRICE_BELOW / NEW_TOP_DEAL, usuwanie). Do dopięcia produkcyjnie: logowanie
-magic-link, rejestracja tokenu push (Expo Notifications), i18n, publikacja w sklepach (M7/CD).
+alerty (PRICE_BELOW / NEW_TOP_DEAL, usuwanie), **auto-rejestracja push**, adres API z
+konfiguracji (`app.json`). Do dopięcia produkcyjnie: logowanie magic-link (wiele kont),
+i18n, publikacja w sklepach (CD).
