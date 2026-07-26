@@ -12,7 +12,7 @@
     "android": { "adaptiveIcon": { "backgroundColor": "#0f172a" } },
     "plugins": ["expo-notifications"],
     "extra": {
-      "apiBaseUrl": "http://localhost:8000"
+      "apiBaseUrl": "https://flight-scout-api.onrender.com"
     }
   }
 }
