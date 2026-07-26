@@ -1,7 +1,5 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -12,12 +10,10 @@ import {
   View,
 } from "react-native";
 
-import { googleConfig, isGoogleConfigured } from "../config";
+import { GoogleSignInButton } from "../components/GoogleSignInButton";
+import { isGoogleConfigured } from "../config";
 import type { RootStackParamList } from "../navigation";
 import { useSession } from "../state/session";
-
-// Wymagane dla logowania przez przeglądarkę (Google) w Expo/React Native.
-WebBrowser.maybeCompleteAuthSession();
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 type Mode = "login" | "register";
@@ -41,29 +37,23 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const gcfg = googleConfig();
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    androidClientId: gcfg.androidClientId,
-    webClientId: gcfg.webClientId,
-  });
-
   // Już zalogowany (sesja odtworzona z pamięci) → od razu do listy ofert.
   useEffect(() => {
     if (!restoring && isAuthed) navigation.replace("Feed");
   }, [restoring, isAuthed, navigation]);
 
-  // Odpowiedź z logowania Google → wyślij token do naszego API.
-  useEffect(() => {
-    if (response?.type !== "success") return;
-    const idToken = response.params?.id_token;
-    if (!idToken) return;
-    setBusy(true);
-    setError(null);
-    loginWithGoogle(idToken)
-      .then(() => navigation.replace("Feed"))
-      .catch((e: unknown) => setError(messageOf(e)))
-      .finally(() => setBusy(false));
-  }, [response, loginWithGoogle, navigation]);
+  // Token z logowania Google → wyślij do naszego API.
+  const onGoogleToken = useCallback(
+    (idToken: string) => {
+      setBusy(true);
+      setError(null);
+      loginWithGoogle(idToken)
+        .then(() => navigation.replace("Feed"))
+        .catch((e: unknown) => setError(messageOf(e)))
+        .finally(() => setBusy(false));
+    },
+    [loginWithGoogle, navigation],
+  );
 
   async function submit(): Promise<void> {
     if (!email.trim() || !password) {
@@ -155,22 +145,13 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
         <View style={styles.line} />
       </View>
 
-      <TouchableOpacity
-        style={[styles.googleButton, (!request || !isGoogleConfigured() || busy) && styles.buttonDisabled]}
-        onPress={() => {
-          setError(null);
-          void promptAsync();
-        }}
-        disabled={!request || !isGoogleConfigured() || busy}
-        accessibilityRole="button"
-      >
-        <Text style={styles.googleText}>Zaloguj przez Google</Text>
-      </TouchableOpacity>
-      {!isGoogleConfigured() ? (
+      {isGoogleConfigured() ? (
+        <GoogleSignInButton disabled={busy} onToken={onGoogleToken} onError={setError} />
+      ) : (
         <Text style={styles.hint}>
           Logowanie Google wymaga konfiguracji (app.json → extra.google). Patrz docs/DEPLOY.md.
         </Text>
-      ) : null}
+      )}
 
       <TouchableOpacity onPress={() => setShowAdvanced((v) => !v)} accessibilityRole="button">
         <Text style={styles.advanced}>{showAdvanced ? "Ukryj ustawienia" : "Zaawansowane"}</Text>
