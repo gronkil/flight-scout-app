@@ -12,7 +12,10 @@
     "android": { "package": "com.flightscout.app", "adaptiveIcon": { "backgroundColor": "#0f172a" } },
     "plugins": ["expo-notifications"],
     "extra": {
-      "apiBaseUrl": "https://flight-scout-api.onrender.com"
+      "apiBaseUrl": "https://flight-scout-api.onrender.com",
+      "eas": {
+        "projectId": "92472aec-66ca-458b-a9e5-98409f66e08e"
+      }
     }
   }
 }
