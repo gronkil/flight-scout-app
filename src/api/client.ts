@@ -63,10 +63,23 @@ export class ApiClient {
 
     if (resp.status === 204) return undefined as T;
     const text = await resp.text();
-    const data = text ? JSON.parse(text) : undefined;
+    // Odpowiedź nie zawsze jest JSON-em (np. serwer zwraca zwykły tekst "Internal Server
+    // Error" przy 500). Parsujemy defensywnie, żeby nie wywalić się na JSON.parse.
+    let data: unknown = undefined;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = undefined;
+      }
+    }
     if (!resp.ok) {
       const detail =
-        data && typeof data === "object" && "detail" in data ? String(data.detail) : resp.statusText;
+        data && typeof data === "object" && data !== null && "detail" in data
+          ? String((data as { detail: unknown }).detail)
+          : resp.status >= 500
+            ? `Błąd serwera (${resp.status}). Spróbuj ponownie za chwilę.`
+            : resp.statusText || `Błąd ${resp.status}`;
       throw new ApiError(resp.status, detail);
     }
     return data as T;
