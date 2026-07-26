@@ -7,6 +7,17 @@ export type Channel = "push" | "mail" | "both";
 export type AlertType = "PRICE_BELOW" | "NEW_TOP_DEAL";
 export type Platform = "ios" | "android" | "expo";
 
+export interface AuthOut {
+  token: string;
+  user_id: string;
+  email: string | null;
+}
+
+export interface MeOut {
+  user_id: string;
+  email: string | null;
+}
+
 export interface ProfileIn {
   origins: string[];
   scope: string;

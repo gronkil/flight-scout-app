@@ -17,3 +17,26 @@ export function configuredBaseUrl(): string {
 export function resolveBaseUrl(override?: string | null): string {
   return (override && override.trim()) || DEFAULT_API_BASE_URL;
 }
+
+// Identyfikatory klienta Google (opcjonalne). Ustawiasz raz w app.json → extra.google
+// (androidClientId / webClientId) po założeniu projektu w Google Cloud. Puste = przycisk
+// Google nieaktywny (logowanie e-mailem działa bez żadnej konfiguracji). To konfiguracja, nie kod.
+export interface GoogleClientConfig {
+  androidClientId?: string;
+  webClientId?: string;
+}
+
+export function googleConfig(): GoogleClientConfig {
+  const extra = (Constants.expoConfig?.extra ?? {}) as { google?: GoogleClientConfig };
+  const g = extra.google ?? {};
+  // Puste stringi z app.json traktujemy jak brak (hook Google nie dostaje pustego id).
+  return {
+    androidClientId: g.androidClientId?.trim() || undefined,
+    webClientId: g.webClientId?.trim() || undefined,
+  };
+}
+
+export function isGoogleConfigured(): boolean {
+  const g = googleConfig();
+  return Boolean(g.androidClientId || g.webClientId);
+}

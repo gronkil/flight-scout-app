@@ -1,57 +1,205 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { useSession } from "../state/session";
+import { googleConfig, isGoogleConfigured } from "../config";
 import type { RootStackParamList } from "../navigation";
+import { useSession } from "../state/session";
+
+// Wymagane dla logowania przez przeglądarkę (Google) w Expo/React Native.
+WebBrowser.maybeCompleteAuthSession();
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
+type Mode = "login" | "register";
 
 export function LoginScreen({ navigation }: Props): React.ReactElement {
-  const { baseUrl, setBaseUrl, setToken } = useSession();
-  const [url, setUrl] = useState(baseUrl);
-  const [key, setKey] = useState("");
+  const {
+    baseUrl,
+    setBaseUrl,
+    isAuthed,
+    restoring,
+    loginWithPassword,
+    registerWithPassword,
+    loginWithGoogle,
+  } = useSession();
 
-  function signIn(): void {
+  const [mode, setMode] = useState<Mode>("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [url, setUrl] = useState(baseUrl);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const gcfg = googleConfig();
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    androidClientId: gcfg.androidClientId,
+    webClientId: gcfg.webClientId,
+  });
+
+  // Już zalogowany (sesja odtworzona z pamięci) → od razu do listy ofert.
+  useEffect(() => {
+    if (!restoring && isAuthed) navigation.replace("Feed");
+  }, [restoring, isAuthed, navigation]);
+
+  // Odpowiedź z logowania Google → wyślij token do naszego API.
+  useEffect(() => {
+    if (response?.type !== "success") return;
+    const idToken = response.params?.id_token;
+    if (!idToken) return;
+    setBusy(true);
+    setError(null);
+    loginWithGoogle(idToken)
+      .then(() => navigation.replace("Feed"))
+      .catch((e: unknown) => setError(messageOf(e)))
+      .finally(() => setBusy(false));
+  }, [response, loginWithGoogle, navigation]);
+
+  async function submit(): Promise<void> {
+    if (!email.trim() || !password) {
+      setError("Podaj e-mail i hasło.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
     setBaseUrl(url);
-    setToken(key || null);
-    navigation.replace("Feed");
+    try {
+      if (mode === "register") await registerWithPassword(email.trim(), password);
+      else await loginWithPassword(email.trim(), password);
+      navigation.replace("Feed");
+    } catch (e: unknown) {
+      setError(messageOf(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (restoring) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>✈️ flight-scout</Text>
-      <Text style={styles.sub}>Zaloguj się do swojego API. Sekret nie jest zaszyty w aplikacji.</Text>
+      <Text style={styles.sub}>
+        {mode === "login" ? "Zaloguj się na swoje konto." : "Załóż konto (e-mail i hasło)."}
+      </Text>
 
-      <Text style={styles.label}>Adres API</Text>
+      <Text style={styles.label}>E-mail</Text>
       <TextInput
         style={styles.input}
-        value={url}
-        onChangeText={setUrl}
+        value={email}
+        onChangeText={setEmail}
         autoCapitalize="none"
-        keyboardType="url"
-        accessibilityLabel="Adres API"
+        autoComplete="email"
+        keyboardType="email-address"
+        placeholder="ty@example.com"
+        accessibilityLabel="E-mail"
       />
 
-      <Text style={styles.label}>Klucz / token</Text>
+      <Text style={styles.label}>Hasło</Text>
       <TextInput
         style={styles.input}
-        value={key}
-        onChangeText={setKey}
+        value={password}
+        onChangeText={setPassword}
         autoCapitalize="none"
         secureTextEntry
-        accessibilityLabel="Klucz lub token dostępu"
+        placeholder={mode === "register" ? "min. 8 znaków" : "hasło"}
+        accessibilityLabel="Hasło"
       />
 
-      <TouchableOpacity style={styles.button} onPress={signIn} accessibilityRole="button">
-        <Text style={styles.buttonText}>Wejdź</Text>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <TouchableOpacity
+        style={[styles.button, busy && styles.buttonDisabled]}
+        onPress={submit}
+        disabled={busy}
+        accessibilityRole="button"
+      >
+        {busy ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>{mode === "login" ? "Zaloguj" : "Zarejestruj"}</Text>
+        )}
       </TouchableOpacity>
-    </View>
+
+      <TouchableOpacity
+        onPress={() => {
+          setMode(mode === "login" ? "register" : "login");
+          setError(null);
+        }}
+        accessibilityRole="button"
+      >
+        <Text style={styles.switchText}>
+          {mode === "login" ? "Nie masz konta? Zarejestruj się" : "Masz już konto? Zaloguj się"}
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.divider}>
+        <View style={styles.line} />
+        <Text style={styles.or}>lub</Text>
+        <View style={styles.line} />
+      </View>
+
+      <TouchableOpacity
+        style={[styles.googleButton, (!request || !isGoogleConfigured() || busy) && styles.buttonDisabled]}
+        onPress={() => {
+          setError(null);
+          void promptAsync();
+        }}
+        disabled={!request || !isGoogleConfigured() || busy}
+        accessibilityRole="button"
+      >
+        <Text style={styles.googleText}>Zaloguj przez Google</Text>
+      </TouchableOpacity>
+      {!isGoogleConfigured() ? (
+        <Text style={styles.hint}>
+          Logowanie Google wymaga konfiguracji (app.json → extra.google). Patrz docs/DEPLOY.md.
+        </Text>
+      ) : null}
+
+      <TouchableOpacity onPress={() => setShowAdvanced((v) => !v)} accessibilityRole="button">
+        <Text style={styles.advanced}>{showAdvanced ? "Ukryj ustawienia" : "Zaawansowane"}</Text>
+      </TouchableOpacity>
+      {showAdvanced ? (
+        <>
+          <Text style={styles.label}>Adres API</Text>
+          <TextInput
+            style={styles.input}
+            value={url}
+            onChangeText={setUrl}
+            autoCapitalize="none"
+            keyboardType="url"
+            accessibilityLabel="Adres API"
+          />
+        </>
+      ) : null}
+    </ScrollView>
   );
 }
 
+function messageOf(e: unknown): string {
+  if (e && typeof e === "object" && "message" in e) return String((e as { message: unknown }).message);
+  return "Coś poszło nie tak. Spróbuj ponownie.";
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, justifyContent: "center", gap: 8, backgroundColor: "#f8fafc" },
+  container: { padding: 24, gap: 8, backgroundColor: "#f8fafc", flexGrow: 1, justifyContent: "center" },
+  center: { alignItems: "center", justifyContent: "center" },
   title: { fontSize: 28, fontWeight: "800", color: "#0f172a" },
   sub: { fontSize: 14, color: "#64748b", marginBottom: 12 },
   label: { fontSize: 13, color: "#334155", marginTop: 8 },
@@ -63,6 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     fontSize: 15,
   },
+  error: { color: "#dc2626", fontSize: 14, marginTop: 8 },
   button: {
     backgroundColor: "#2563eb",
     padding: 14,
@@ -70,5 +219,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 18,
   },
+  buttonDisabled: { opacity: 0.5 },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  switchText: { color: "#2563eb", textAlign: "center", marginTop: 14, fontWeight: "600" },
+  divider: { flexDirection: "row", alignItems: "center", marginVertical: 18, gap: 10 },
+  line: { flex: 1, height: 1, backgroundColor: "#e2e8f0" },
+  or: { color: "#94a3b8", fontSize: 13 },
+  googleButton: {
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  googleText: { color: "#0f172a", fontWeight: "700", fontSize: 16 },
+  hint: { color: "#94a3b8", fontSize: 12, marginTop: 6, textAlign: "center" },
+  advanced: { color: "#64748b", textAlign: "center", marginTop: 22, fontSize: 13 },
 });

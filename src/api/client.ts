@@ -4,6 +4,8 @@
 import type {
   AlertIn,
   AlertOut,
+  AuthOut,
+  MeOut,
   OfferOut,
   Platform,
   ProfileIn,
@@ -49,7 +51,9 @@ export class ApiClient {
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     const auth = this.getAuth();
-    if (auth) headers["X-API-Key"] = auth;
+    // Token sesji (z logowania) w standardowym nagłówku Bearer. Brak tokenu = żądanie
+    // anonimowe (np. samo logowanie/rejestracja). Zero sekretów zaszytych w kodzie.
+    if (auth) headers["Authorization"] = `Bearer ${auth}`;
 
     const resp = await this.fetchFn(`${this.baseUrl}${path}`, {
       method,
@@ -74,6 +78,23 @@ export class ApiClient {
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
       .join("&");
     return q ? `?${q}` : "";
+  }
+
+  // --- Logowanie (konto własne e-mail+hasło oraz Google) ---
+  register(email: string, password: string): Promise<AuthOut> {
+    return this.request("POST", "/auth/register", { email, password });
+  }
+  login(email: string, password: string): Promise<AuthOut> {
+    return this.request("POST", "/auth/login", { email, password });
+  }
+  loginWithGoogle(idToken: string): Promise<AuthOut> {
+    return this.request("POST", "/auth/google", { id_token: idToken });
+  }
+  me(): Promise<MeOut> {
+    return this.request("GET", "/auth/me");
+  }
+  logout(): Promise<void> {
+    return this.request("POST", "/auth/logout");
   }
 
   // --- Profile ---

@@ -15,31 +15,48 @@ import { useSession } from "../state/session";
 type Props = NativeStackScreenProps<RootStackParamList, "Feed">;
 
 export function FeedScreen({ navigation }: Props): React.ReactElement {
-  const { client } = useSession();
+  const { client, userId, signOut } = useSession();
   const { state, reload } = useAsync<OfferOut[]>(() => client.listOffers({ min_grade: "B" }), []);
 
-  // Auto-rejestracja urządzenia do push (raz, po wejściu). Cicho pomija, gdy się nie uda.
+  // Auto-rejestracja urządzenia do push (raz, po wejściu). Przypisujemy do zalogowanego
+  // użytkownika (userId z sesji); gdy brak — fallback do domyślnego. Cicho pomija błędy.
   useEffect(() => {
     let alive = true;
     void registerForPushToken().then((token) => {
-      if (alive && token) void client.registerDevice(DEFAULT_USER_ID, "expo", token).catch(() => {});
+      if (alive && token) {
+        void client.registerDevice(userId ?? DEFAULT_USER_ID, "expo", token).catch(() => {});
+      }
     });
     return () => {
       alive = false;
     };
-  }, [client]);
+  }, [client, userId]);
+
+  async function handleSignOut(): Promise<void> {
+    await signOut();
+    navigation.replace("Login");
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Najlepsze okazje</Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Profiles")}
-          accessibilityRole="button"
-          accessibilityLabel="Profile wyszukiwania"
-        >
-          <Text style={styles.link}>Profile</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Profiles")}
+            accessibilityRole="button"
+            accessibilityLabel="Profile wyszukiwania"
+          >
+            <Text style={styles.link}>Profile</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleSignOut}
+            accessibilityRole="button"
+            accessibilityLabel="Wyloguj"
+          >
+            <Text style={styles.signout}>Wyloguj</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {state.status === "loading" ? <Loading /> : null}
@@ -71,6 +88,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: { fontSize: 22, fontWeight: "800", color: "#0f172a" },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 16 },
   link: { color: "#2563eb", fontWeight: "600" },
+  signout: { color: "#64748b", fontWeight: "600" },
   list: { padding: 16, paddingTop: 0 },
 });

@@ -14,24 +14,41 @@ function fakeFetch(status: number, body: unknown) {
 }
 
 describe("ApiClient", () => {
-  it("dołącza X-API-Key gdy token obecny", async () => {
+  it("dołącza Authorization: Bearer gdy token obecny", async () => {
     const fetchFn = fakeFetch(200, []);
     const client = new ApiClient({
       baseUrl: "http://api",
-      getAuth: () => "secret",
+      getAuth: () => "sess-tok",
       fetchFn: fetchFn as unknown as typeof fetch,
     });
     await client.listProfiles();
     const init = fetchFn.mock.calls[0][1] as RequestInit;
-    expect((init.headers as Record<string, string>)["X-API-Key"]).toBe("secret");
+    expect((init.headers as Record<string, string>)["Authorization"]).toBe("Bearer sess-tok");
   });
 
-  it("nie dołącza klucza gdy brak tokenu (zero sekretów)", async () => {
+  it("nie dołącza nagłówka auth gdy brak tokenu (zero sekretów)", async () => {
     const fetchFn = fakeFetch(200, []);
     const client = new ApiClient({ baseUrl: "http://api", fetchFn: fetchFn as unknown as typeof fetch });
     await client.listProfiles();
     const init = fetchFn.mock.calls[0][1] as RequestInit;
-    expect((init.headers as Record<string, string>)["X-API-Key"]).toBeUndefined();
+    expect((init.headers as Record<string, string>)["Authorization"]).toBeUndefined();
+  });
+
+  it("login/register/google wołają właściwe endpointy i zwracają token", async () => {
+    const fetchFn = fakeFetch(200, { token: "T", user_id: "u1", email: "a@b.com" });
+    const client = new ApiClient({ baseUrl: "http://api", fetchFn: fetchFn as unknown as typeof fetch });
+
+    const reg = await client.register("a@b.com", "supersecret");
+    expect(reg.token).toBe("T");
+    expect(fetchFn.mock.calls[0][0]).toBe("http://api/auth/register");
+
+    await client.login("a@b.com", "supersecret");
+    expect(fetchFn.mock.calls[1][0]).toBe("http://api/auth/login");
+
+    await client.loginWithGoogle("idtok");
+    expect(fetchFn.mock.calls[2][0]).toBe("http://api/auth/google");
+    const body = JSON.parse((fetchFn.mock.calls[2][1] as RequestInit).body as string);
+    expect(body).toEqual({ id_token: "idtok" });
   });
 
   it("buduje query dla wyszukiwania", async () => {
