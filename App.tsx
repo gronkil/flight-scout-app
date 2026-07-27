@@ -5,6 +5,7 @@ import React from "react";
 
 import type { RootStackParamList } from "./src/navigation";
 import { AlertsScreen } from "./src/screens/AlertsScreen";
+import { DeveloperScreen } from "./src/screens/DeveloperScreen";
 import { FeedScreen } from "./src/screens/FeedScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { OfferDetailScreen } from "./src/screens/OfferDetailScreen";
@@ -27,6 +28,11 @@ export default function App(): React.ReactElement {
             options={{ title: "Szczegóły oferty" }}
           />
           <Stack.Screen name="Profiles" component={ProfilesScreen} options={{ title: "Profile" }} />
+          <Stack.Screen
+            name="Developer"
+            component={DeveloperScreen}
+            options={{ title: "Developer" }}
+          />
           <Stack.Screen
             name="Alerts"
             component={AlertsScreen}

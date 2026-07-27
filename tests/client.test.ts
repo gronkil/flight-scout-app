@@ -74,4 +74,22 @@ describe("ApiClient", () => {
     });
     expect(new ApiError(500, "x")).toBeInstanceOf(Error);
   });
+
+  it("diagnose woła /diag/search z origin i month", async () => {
+    const body = {
+      origin: "WAW",
+      month: "2026-09",
+      raw_count: 0,
+      kept_ab: 0,
+      grade_counts: {},
+      samples: [],
+      error: null,
+    };
+    const fetchFn = fakeFetch(200, body);
+    const client = new ApiClient({ baseUrl: "http://api", fetchFn: fetchFn as unknown as typeof fetch });
+    const d = await client.diagnose("WAW", "2026-09");
+    expect(fetchFn.mock.calls[0][0]).toBe("http://api/diag/search?origin=WAW&month=2026-09");
+    expect(d.raw_count).toBe(0);
+    expect(d.error).toBeNull();
+  });
 });

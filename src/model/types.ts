@@ -95,3 +95,14 @@ export interface AlertOut {
   max_per_day: number;
   channel: string;
 }
+
+// Diagnostyka „czemu brak ofert" — lustro GET /diag/search (backend/application/diagnose_search.py).
+export interface SearchDiagnostics {
+  origin: string;
+  month: string;
+  raw_count: number;
+  kept_ab: number;
+  grade_counts: Record<string, number>;
+  samples: Array<Record<string, unknown>>;
+  error: string | null;
+}

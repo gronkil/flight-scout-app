@@ -10,6 +10,7 @@ import type {
   Platform,
   ProfileIn,
   ProfileOut,
+  SearchDiagnostics,
 } from "../model/types";
 
 export class ApiError extends Error {
@@ -130,6 +131,11 @@ export class ApiClient {
   // --- Feed ---
   listOffers(filters: OfferFilters = {}): Promise<OfferOut[]> {
     return this.request("GET", `/offers${this.query({ ...filters })}`);
+  }
+
+  // --- Diagnostyka „czemu brak ofert" (panel developera) ---
+  diagnose(origin: string, month: string): Promise<SearchDiagnostics> {
+    return this.request("GET", `/diag/search${this.query({ origin, month })}`);
   }
 
   // --- Alerty ---

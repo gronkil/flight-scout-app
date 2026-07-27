@@ -50,6 +50,13 @@ export function FeedScreen({ navigation }: Props): React.ReactElement {
             <Text style={styles.link}>Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={() => navigation.navigate("Developer")}
+            accessibilityRole="button"
+            accessibilityLabel="Panel developera i diagnostyka"
+          >
+            <Text style={styles.link}>🛠</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={handleSignOut}
             accessibilityRole="button"
             accessibilityLabel="Wyloguj"

@@ -6,4 +6,5 @@ export type RootStackParamList = {
   OfferDetail: { offer: OfferOut };
   Profiles: undefined;
   Alerts: { profileId: string; profileName: string };
+  Developer: undefined;
 };
