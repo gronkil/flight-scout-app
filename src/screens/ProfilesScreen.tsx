@@ -43,6 +43,26 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
     }
   }
 
+  async function remove(id: string, name: string): Promise<void> {
+    RNAlert.alert("Usunąć profil?", `${name} — profil i jego alerty zostaną usunięte.`, [
+      { text: "Anuluj", style: "cancel" },
+      {
+        text: "Usuń",
+        style: "destructive",
+        onPress: () => {
+          void (async () => {
+            try {
+              await client.deleteProfile(id);
+              reload();
+            } catch (e) {
+              RNAlert.alert("Nie udało się usunąć", e instanceof Error ? e.message : String(e));
+            }
+          })();
+        },
+      },
+    ]);
+  }
+
   async function search(id: string): Promise<void> {
     // Szukaj w oknie najbliższych miesięcy (bieżący + 2), inaczej pod koniec miesiąca
     // znajdujemy głównie loty z przeszłymi datami, które feed ukrywa → pusta strona główna.
@@ -114,6 +134,12 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
                   >
                     <Text style={styles.action}>Alerty</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => remove(item.id, `${item.origins.join(", ")} · ${item.scope}`)}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.actionDanger}>Usuń</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -138,4 +164,5 @@ const styles = StyleSheet.create({
   cardMeta: { fontSize: 13, color: "#64748b", marginTop: 2 },
   actions: { flexDirection: "row", gap: 20, marginTop: 10 },
   action: { color: "#2563eb", fontWeight: "600" },
+  actionDanger: { color: "#b91c1c", fontWeight: "600" },
 });
