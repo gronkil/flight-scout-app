@@ -46,3 +46,17 @@ export function currentMonth(now: Date = new Date()): string {
   const m = String(now.getUTCMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
 }
+
+// Najbliższe miesiące (YYYY-MM), od bieżącego w przód. Wyszukiwanie z wyprzedzeniem —
+// pod koniec miesiąca sam bieżący daje głównie loty z przeszłymi datami (feed je ukrywa),
+// więc obejmujemy też kolejne miesiące, żeby były oferty z przyszłymi datami.
+export function upcomingMonths(count: number, now: Date = new Date()): string[] {
+  const out: string[] = [];
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth(); // 0-based
+  for (let i = 0; i < Math.max(count, 1); i++) {
+    const d = new Date(Date.UTC(y, m + i, 1));
+    out.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
+  }
+  return out;
+}

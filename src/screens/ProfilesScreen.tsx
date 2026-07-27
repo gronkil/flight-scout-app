@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
-import { currentMonth } from "../lib/format";
+import { upcomingMonths } from "../lib/format";
 import { useAsync } from "../lib/useAsync";
 import type { ProfileOut } from "../model/types";
 import type { RootStackParamList } from "../navigation";
@@ -44,11 +44,25 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
   }
 
   async function search(id: string): Promise<void> {
-    try {
-      const offers = await client.searchProfile(id, currentMonth());
-      RNAlert.alert("Wyszukano", `Znaleziono ${offers.length} ofert A/B. Zobacz w feedzie.`);
-    } catch (e) {
-      RNAlert.alert("Błąd wyszukiwania", e instanceof Error ? e.message : String(e));
+    // Szukaj w oknie najbliższych miesięcy (bieżący + 2), inaczej pod koniec miesiąca
+    // znajdujemy głównie loty z przeszłymi datami, które feed ukrywa → pusta strona główna.
+    const months = upcomingMonths(3);
+    let total = 0;
+    const errors: string[] = [];
+    for (const m of months) {
+      try {
+        const offers = await client.searchProfile(id, m);
+        total += offers.length;
+      } catch (e) {
+        errors.push(e instanceof Error ? e.message : String(e));
+      }
+    }
+    if (total > 0) {
+      RNAlert.alert("Wyszukano", `Znaleziono ${total} ofert A/B (najbliższe miesiące). Zobacz w feedzie.`);
+    } else if (errors.length === months.length) {
+      RNAlert.alert("Błąd wyszukiwania", errors[0]);
+    } else {
+      RNAlert.alert("Wyszukano", "Brak ofert A/B w najbliższych miesiącach dla tego profilu.");
     }
   }
 
