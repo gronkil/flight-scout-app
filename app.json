@@ -2,7 +2,7 @@
   "expo": {
     "name": "flight-scout",
     "slug": "flight-scout",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "orientation": "portrait",
     "scheme": "flightscout",
     "userInterfaceStyle": "automatic",
