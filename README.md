@@ -13,7 +13,7 @@ Expo SDK 51 · React Native 0.74 · React Navigation · TypeScript (strict). Rdz
 src/
 ├── api/client.ts        # typowany klient REST (fetch wstrzykiwalny) — zero sekretów
 ├── model/types.ts       # DTO = lustro kontraktu API (schemas.py)
-├── lib/                 # format, feed (pure), useAsync (hook ładowania)
+├── lib/                 # format, feed (pure), returnCalendar (pure builder siatki), useAsync (hook)
 ├── state/session.tsx    # kontekst sesji (baseUrl + token → ApiClient)
 ├── components/          # GradeBadge, OfferCard, StateViews (loading/error/empty, a11y)
 └── screens/             # Login, Feed, OfferDetail, Profiles, Alerts
@@ -45,7 +45,8 @@ cicho pomijany.
 
 ## Zakres i dalsze kroki
 Zrealizowane: logowanie (adres+token), feed ofert (A/B, powrót, flex, deeplinki),
-szczegóły oferty (Lot tam / Powrót), profile (lista/tworzenie/„szukaj teraz”),
+szczegóły oferty (Lot tam + **kalendarz powrotów** — siatka miesiąca „kiedy wrócić”),
+profile (lista/tworzenie/„szukaj teraz”),
 alerty (PRICE_BELOW / NEW_TOP_DEAL, usuwanie), **auto-rejestracja push**, adres API z
 konfiguracji (`app.json`). Do dopięcia produkcyjnie: logowanie magic-link (wiele kont),
 i18n, publikacja w sklepach (CD).
