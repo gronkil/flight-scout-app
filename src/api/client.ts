@@ -10,6 +10,7 @@ import type {
   Platform,
   ProfileIn,
   ProfileOut,
+  ReturnCalendarOut,
   SearchDiagnostics,
 } from "../model/types";
 
@@ -131,6 +132,26 @@ export class ApiClient {
   // --- Feed ---
   listOffers(filters: OfferFilters = {}): Promise<OfferOut[]> {
     return this.request("GET", `/offers${this.query({ ...filters })}`);
+  }
+
+  // Kalendarz powrotów DEST→origin dla wybranego lotu tam („kiedy można wrócić").
+  returnCalendar(
+    origin: string,
+    dest: string,
+    depart: string,
+    minNights = 1,
+    maxNights = 30,
+  ): Promise<ReturnCalendarOut> {
+    return this.request(
+      "GET",
+      `/offers/returns${this.query({
+        origin,
+        dest,
+        depart,
+        min_nights: minNights,
+        max_nights: maxNights,
+      })}`,
+    );
   }
 
   // --- Diagnostyka „czemu brak ofert" (panel developera) ---

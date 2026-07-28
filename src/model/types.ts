@@ -57,6 +57,22 @@ export interface FlexOut {
   saved: number;
 }
 
+// Kalendarz powrotów — lustro GET /offers/returns (backend/adapters/inbound/api/schemas.py).
+export interface ReturnDayOut {
+  return_date: string;
+  price: number;
+  nights: number | null;
+  changes: number | null;
+  link: string | null;
+}
+
+export interface ReturnCalendarOut {
+  origin: string;
+  dest: string;
+  depart_date: string;
+  days: ReturnDayOut[];
+}
+
 export interface OfferOut {
   city: string;
   dest: string;
