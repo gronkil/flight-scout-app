@@ -5,7 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "rea
 export function Loading(): React.ReactElement {
   return (
     <View style={styles.center} accessibilityLabel="Ładowanie">
-      <ActivityIndicator size="large" color="#2563eb" />
+      <ActivityIndicator size="large" color="#FF5C5C" />
     </View>
   );
 }
@@ -47,8 +47,8 @@ export function EmptyView({ message }: { message: string }): React.ReactElement 
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 10 },
-  title: { fontSize: 18, fontWeight: "700", color: "#0f172a" },
+  title: { fontSize: 18, fontWeight: "700", color: "#23272E" },
   sub: { fontSize: 14, color: "#64748b", textAlign: "center" },
-  button: { backgroundColor: "#2563eb", paddingVertical: 10, paddingHorizontal: 18, borderRadius: 8 },
+  button: { backgroundColor: "#FF5C5C", paddingVertical: 10, paddingHorizontal: 18, borderRadius: 8 },
   buttonText: { color: "#fff", fontWeight: "600" },
 });

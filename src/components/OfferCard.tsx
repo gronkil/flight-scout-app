@@ -65,10 +65,10 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between" },
   left: { flex: 1, paddingRight: 12, gap: 4 },
   right: { alignItems: "flex-end", gap: 8 },
-  city: { fontSize: 17, fontWeight: "700", color: "#0f172a" },
+  city: { fontSize: 17, fontWeight: "700", color: "#23272E" },
   code: { fontSize: 13, color: "#94a3b8", fontWeight: "500" },
   meta: { fontSize: 13, color: "#64748b" },
   flex: { fontSize: 12, color: "#b45309" },
-  ret: { fontSize: 12, color: "#0f172a" },
-  price: { fontSize: 20, fontWeight: "800", color: "#0f172a" },
+  ret: { fontSize: 12, color: "#23272E" },
+  price: { fontSize: 20, fontWeight: "800", color: "#23272E" },
 });

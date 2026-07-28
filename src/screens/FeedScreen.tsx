@@ -94,9 +94,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
   },
-  title: { fontSize: 22, fontWeight: "800", color: "#0f172a" },
+  title: { fontSize: 22, fontWeight: "800", color: "#23272E" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 16 },
-  link: { color: "#2563eb", fontWeight: "600" },
+  link: { color: "#FF5C5C", fontWeight: "600" },
   signout: { color: "#64748b", fontWeight: "600" },
   list: { padding: 16, paddingTop: 0 },
 });

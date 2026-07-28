@@ -1,15 +1,26 @@
 {
   "expo": {
-    "name": "flight-scout",
+    "name": "Lecimy",
     "slug": "flight-scout",
     "version": "0.1.4",
     "orientation": "portrait",
     "scheme": "flightscout",
-    "userInterfaceStyle": "automatic",
-    "splash": { "backgroundColor": "#0f172a" },
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF5C5C"
+    },
     "assetBundlePatterns": ["**/*"],
     "ios": { "supportsTablet": true },
-    "android": { "package": "com.flightscout.app", "adaptiveIcon": { "backgroundColor": "#0f172a" } },
+    "android": {
+      "package": "com.flightscout.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-foreground.png",
+        "backgroundColor": "#FF5C5C"
+      }
+    },
     "plugins": ["expo-notifications"],
     "extra": {
       "apiBaseUrl": "https://flight-scout-api.onrender.com",

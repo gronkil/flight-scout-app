@@ -79,14 +79,14 @@ function Row({ label, value }: { label: string; value: string }): React.ReactEle
 
 const styles = StyleSheet.create({
   container: { padding: 20, gap: 14, backgroundColor: "#f8fafc" },
-  city: { fontSize: 24, fontWeight: "800", color: "#0f172a" },
+  city: { fontSize: 24, fontWeight: "800", color: "#23272E" },
   code: { fontSize: 15, color: "#94a3b8", fontWeight: "500" },
   box: { backgroundColor: "#fff", borderRadius: 12, borderWidth: 1, borderColor: "#e5e7eb", padding: 14, gap: 6 },
   section: { fontSize: 15, fontWeight: "700", color: "#16a34a", marginBottom: 4 },
   rowLine: { flexDirection: "row", justifyContent: "space-between" },
   rowLabel: { color: "#64748b", fontSize: 14 },
-  rowValue: { color: "#0f172a", fontSize: 14, fontWeight: "600" },
-  button: { backgroundColor: "#2563eb", padding: 14, borderRadius: 8, alignItems: "center" },
+  rowValue: { color: "#23272E", fontSize: 14, fontWeight: "600" },
+  button: { backgroundColor: "#FF5C5C", padding: 14, borderRadius: 8, alignItems: "center" },
   secondary: { backgroundColor: "#0ea5e9" },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   note: { color: "#94a3b8", fontSize: 12, textAlign: "center", marginTop: 8 },

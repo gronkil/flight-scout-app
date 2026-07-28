@@ -17,11 +17,18 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App(): React.ReactElement {
   return (
     <SessionProvider>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Login">
+        <Stack.Navigator
+          initialRouteName="Login"
+          screenOptions={{
+            headerStyle: { backgroundColor: "#FF5C5C" },
+            headerTintColor: "#ffffff",
+            headerTitleStyle: { fontWeight: "800" },
+          }}
+        >
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Feed" component={FeedScreen} options={{ title: "flight-scout" }} />
+          <Stack.Screen name="Feed" component={FeedScreen} options={{ title: "Lecimy" }} />
           <Stack.Screen
             name="OfferDetail"
             component={OfferDetailScreen}

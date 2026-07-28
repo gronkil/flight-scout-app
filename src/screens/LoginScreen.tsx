@@ -77,14 +77,14 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
   if (restoring) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#FF5C5C" />
       </View>
     );
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>✈️ flight-scout</Text>
+      <Text style={styles.title}>✈️ Lecimy</Text>
       <Text style={styles.sub}>
         {mode === "login" ? "Zaloguj się na swoje konto." : "Załóż konto (e-mail i hasło)."}
       </Text>
@@ -181,7 +181,7 @@ function messageOf(e: unknown): string {
 const styles = StyleSheet.create({
   container: { padding: 24, gap: 8, backgroundColor: "#f8fafc", flexGrow: 1, justifyContent: "center" },
   center: { alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 28, fontWeight: "800", color: "#0f172a" },
+  title: { fontSize: 28, fontWeight: "800", color: "#23272E" },
   sub: { fontSize: 14, color: "#64748b", marginBottom: 12 },
   label: { fontSize: 13, color: "#334155", marginTop: 8 },
   input: {
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   error: { color: "#dc2626", fontSize: 14, marginTop: 8 },
   button: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "#FF5C5C",
     padding: 14,
     borderRadius: 8,
     alignItems: "center",
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  switchText: { color: "#2563eb", textAlign: "center", marginTop: 14, fontWeight: "600" },
+  switchText: { color: "#FF5C5C", textAlign: "center", marginTop: 14, fontWeight: "600" },
   divider: { flexDirection: "row", alignItems: "center", marginVertical: 18, gap: 10 },
   line: { flex: 1, height: 1, backgroundColor: "#e2e8f0" },
   or: { color: "#94a3b8", fontSize: 13 },
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  googleText: { color: "#0f172a", fontWeight: "700", fontSize: 16 },
+  googleText: { color: "#23272E", fontWeight: "700", fontSize: 16 },
   hint: { color: "#94a3b8", fontSize: 12, marginTop: 6, textAlign: "center" },
   advanced: { color: "#64748b", textAlign: "center", marginTop: 22, fontSize: 13 },
 });

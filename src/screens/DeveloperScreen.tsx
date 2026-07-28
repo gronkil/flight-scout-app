@@ -117,7 +117,7 @@ export function DeveloperScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f1f5f9" },
   content: { padding: 16, gap: 6 },
-  h2: { fontSize: 16, fontWeight: "800", color: "#0f172a", marginTop: 14 },
+  h2: { fontSize: 16, fontWeight: "800", color: "#23272E", marginTop: 14 },
   hint: { fontSize: 13, color: "#475569", lineHeight: 19 },
   row: { flexDirection: "row", gap: 10, marginTop: 6 },
   col: { flex: 1 },
@@ -129,10 +129,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     backgroundColor: "#fff",
-    color: "#0f172a",
+    color: "#23272E",
   },
   btn: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "#FF5C5C",
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   mono: {
     fontFamily: "monospace",
     fontSize: 12,
-    color: "#0f172a",
+    color: "#23272E",
     backgroundColor: "#e2e8f0",
     borderRadius: 8,
     padding: 10,

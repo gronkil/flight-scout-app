@@ -53,5 +53,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   disabled: { opacity: 0.5 },
-  text: { color: "#0f172a", fontWeight: "700", fontSize: 16 },
+  text: { color: "#23272E", fontWeight: "700", fontSize: 16 },
 });
