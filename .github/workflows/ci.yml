@@ -1,8 +1,12 @@
 name: CI (Expo/RN)
 
 # Bramka jakości aplikacji: typy (TS strict) + testy rdzenia (Vitest) + bundle.
+#
+# PRACUJEMY NA GALEZI 'dev'. Gdy CI na 'dev' przejdzie na zielono, workflow
+# "Release (dev -> main + APK)" automatycznie awansuje 'main' i zbuduje APK.
 on:
   push:
+    branches: [dev, main]
   pull_request:
 
 permissions:

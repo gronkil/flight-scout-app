@@ -1,20 +1,24 @@
-name: APK (Gradle build)
+name: Release (dev -> main + APK)
 
-# Buduje gotowy plik APK (Android) BEZPOSREDNIO na GitHub Actions (Gradle),
-# bez EAS — dzieki temu NIE ma zadnego limitu buildow. APK laduje w Releases,
-# skad pobierasz go na telefon i instalujesz.
+# Pipeline promocyjny BEZ zadnych sekretow.
 #
-# ZERO dodatkowej konfiguracji / sekretow:
-#   - build robi 'expo prebuild' + './gradlew assembleRelease'
-#   - APK jest podpisany stalym kluczem debug z szablonu Expo, wiec kolejne
-#     wersje instaluja sie NA WIERZCH (bez odinstalowywania).
-#   - versionCode = numer uruchomienia (rosnie), zeby telefon przyjmowal update.
+# PRZEPLYW:
+#   push na 'dev'  ->  CI (Expo/RN): typy + testy + bundle
+#                        \-- gdy ZIELONE ---> ten workflow:
+#                              1) AWANS: fast-forward 'main' do zielonego commita
+#                              2) BUILD:  expo prebuild + ./gradlew assembleRelease
+#                              3) RELEASE: publikacja APK w GitHub Releases
 #
-# KIEDY SIE ODPALA:
-#   - Automatycznie PO workflow "CI (Expo/RN)" — ale TYLKO gdy CI zakonczylo sie
-#     sukcesem (zielone) na galezi main. Dzieki temu APK powstaje wylacznie z
-#     kodu, ktory przeszedl typy + testy + bundle.
-#   - Recznie z zakladki Actions (workflow_dispatch).
+# Dzieki temu 'main' zawsze wskazuje kod, ktory przeszedl CI, a APK powstaje
+# DOKLADNIE z tego samego commita.
+#
+# Uwaga techniczna: awans i build sa w JEDNYM workflow celowo. Push do 'main'
+# robiony tokenem GITHUB_TOKEN nie wyzwala kolejnych workflowow (ochrona GitHuba
+# przed petla), wiec nie da sie wygodnie zlapac go osobnym 'on: push: main'.
+# Sekwencyjny pipeline wyzwalany zielonym CI jest tu najpewniejszy.
+#
+# APK: podpisany stalym kluczem debug z szablonu Expo (kolejne wersje instaluja
+# sie NA WIERZCH), versionCode = numer uruchomienia (rosnie).
 on:
   workflow_run:
     workflows: ["CI (Expo/RN)"]
@@ -22,21 +26,39 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write   # potrzebne do utworzenia Release z plikiem APK
+  contents: write   # awans 'main' + utworzenie Release z plikiem APK
 
 jobs:
-  apk:
+  release:
     runs-on: ubuntu-latest
-    # Buduj tylko gdy: reczne uruchomienie ALBO CI zielone na main.
+    # Buduj tylko gdy: reczne uruchomienie ALBO CI zielone na galezi 'dev'.
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
           (github.event.workflow_run.conclusion == 'success' &&
-           github.event.workflow_run.head_branch == 'main') }}
+           github.event.workflow_run.head_branch == 'dev') }}
     steps:
       - uses: actions/checkout@v4
         with:
-          # Zbuduj DOKLADNIE ten commit, ktory przeszedl CI (a nie czubek galezi).
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          # Pelna historia potrzebna do fast-forward 'main'.
+          fetch-depth: 0
+          # Bazuj na 'main'; krok awansu przesunie ja do zielonego commita z 'dev'.
+          ref: main
+
+      - name: Awans main -> zielony commit z dev (fast-forward)
+        # Tylko dla automatu (workflow_run). Przy recznym dispatchu budujemy 'main' jak jest.
+        if: github.event_name == 'workflow_run'
+        env:
+          GREEN_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin "$GREEN_SHA"
+          # --ff-only: jesli 'main' rozjechala sie z 'dev', celowo przerywamy
+          # zamiast nadpisywac historie (bezpieczna awaria).
+          git merge --ff-only "$GREEN_SHA"
+          git push origin HEAD:main
+          echo "main awansowana do $GREEN_SHA"
 
       - uses: actions/setup-node@v4
         with:
