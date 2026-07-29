@@ -9,9 +9,16 @@ name: APK (Gradle build)
 #   - APK jest podpisany stalym kluczem debug z szablonu Expo, wiec kolejne
 #     wersje instaluja sie NA WIERZCH (bez odinstalowywania).
 #   - versionCode = numer uruchomienia (rosnie), zeby telefon przyjmowal update.
+#
+# KIEDY SIE ODPALA:
+#   - Automatycznie PO workflow "CI (Expo/RN)" — ale TYLKO gdy CI zakonczylo sie
+#     sukcesem (zielone) na galezi main. Dzieki temu APK powstaje wylacznie z
+#     kodu, ktory przeszedl typy + testy + bundle.
+#   - Recznie z zakladki Actions (workflow_dispatch).
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["CI (Expo/RN)"]
+    types: [completed]
   workflow_dispatch: {}
 
 permissions:
@@ -20,8 +27,16 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    # Buduj tylko gdy: reczne uruchomienie ALBO CI zielone na main.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.head_branch == 'main') }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Zbuduj DOKLADNIE ten commit, ktory przeszedl CI (a nie czubek galezi).
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
