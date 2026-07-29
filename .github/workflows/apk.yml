@@ -1,0 +1,77 @@
+name: APK (Gradle build)
+
+# Buduje gotowy plik APK (Android) BEZPOSREDNIO na GitHub Actions (Gradle),
+# bez EAS — dzieki temu NIE ma zadnego limitu buildow. APK laduje w Releases,
+# skad pobierasz go na telefon i instalujesz.
+#
+# ZERO dodatkowej konfiguracji / sekretow:
+#   - build robi 'expo prebuild' + './gradlew assembleRelease'
+#   - APK jest podpisany stalym kluczem debug z szablonu Expo, wiec kolejne
+#     wersje instaluja sie NA WIERZCH (bez odinstalowywania).
+#   - versionCode = numer uruchomienia (rosnie), zeby telefon przyjmowal update.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # potrzebne do utworzenia Release z plikiem APK
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Instalacja zaleznosci
+        run: npm ci
+
+      - name: Ustaw versionCode (rosnacy, dla update na wierzch)
+        # Numer uruchomienia jako versionCode => kolejne APK instaluja sie jako aktualizacja.
+        run: |
+          node -e "
+            const fs=require('fs');
+            const p='app.json';
+            const j=JSON.parse(fs.readFileSync(p,'utf8'));
+            j.expo.android = j.expo.android || {};
+            j.expo.android.versionCode = Number(process.env.GITHUB_RUN_NUMBER);
+            fs.writeFileSync(p, JSON.stringify(j,null,2));
+            console.log('versionCode =', j.expo.android.versionCode);
+          "
+
+      - name: Wygeneruj projekt Android (expo prebuild)
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Zbuduj APK (Gradle)
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Przygotuj plik APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk flight-scout.apk
+
+      - name: Opublikuj jako Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-v${{ github.run_number }}
+          name: flight-scout APK v${{ github.run_number }}
+          body: |
+            Aplikacja flight-scout (Android APK) — zbudowana na GitHub Actions (bez limitu EAS).
+            Pobierz plik `flight-scout.apk` ponizej i zainstaluj na telefonie
+            (zezwol na instalacje z nieznanych zrodel). Kolejne wersje instaluja sie na wierzch.
+          files: flight-scout.apk
+          draft: false
+          prerelease: false
