@@ -13,6 +13,7 @@ import {
 import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { isGoogleConfigured } from "../config";
 import type { RootStackParamList } from "../navigation";
+import { BRAND } from "../theme";
 import { useSession } from "../state/session";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
@@ -84,7 +85,8 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>✈️ Lecimy</Text>
+      <Text style={styles.title}>{BRAND.name}</Text>
+      <Text style={styles.brandTagline}>{BRAND.tagline}</Text>
       <Text style={styles.sub}>
         {mode === "login" ? "Zaloguj się na swoje konto." : "Załóż konto (e-mail i hasło)."}
       </Text>
@@ -181,7 +183,8 @@ function messageOf(e: unknown): string {
 const styles = StyleSheet.create({
   container: { padding: 24, gap: 8, backgroundColor: "#f8fafc", flexGrow: 1, justifyContent: "center" },
   center: { alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 28, fontWeight: "800", color: "#23272E" },
+  title: { fontSize: 34, fontWeight: "800", color: "#23272E", letterSpacing: -1 },
+  brandTagline: { fontSize: 15, fontWeight: "600", color: "#FF5A5F", marginBottom: 20 },
   sub: { fontSize: 14, color: "#64748b", marginBottom: 12 },
   label: { fontSize: 13, color: "#334155", marginTop: 8 },
   input: {

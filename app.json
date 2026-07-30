@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Lecimy",
+    "name": "Odlot",
     "slug": "flight-scout",
-    "version": "0.1.4",
+    "version": "0.2.0",
     "orientation": "portrait",
     "scheme": "flightscout",
     "userInterfaceStyle": "light",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FF5C5C"
+      "backgroundColor": "#141B2E"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": { "supportsTablet": true },
@@ -18,7 +18,7 @@
       "package": "com.flightscout.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-foreground.png",
-        "backgroundColor": "#FF5C5C"
+        "backgroundColor": "#FF5A5F"
       }
     },
     "plugins": ["expo-notifications"],

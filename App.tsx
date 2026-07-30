@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 
 import type { RootStackParamList } from "./src/navigation";
+import { BRAND, colors } from "./src/theme";
 import { AlertsScreen } from "./src/screens/AlertsScreen";
 import { DeveloperScreen } from "./src/screens/DeveloperScreen";
 import { FeedScreen } from "./src/screens/FeedScreen";
@@ -22,13 +23,13 @@ export default function App(): React.ReactElement {
         <Stack.Navigator
           initialRouteName="Login"
           screenOptions={{
-            headerStyle: { backgroundColor: "#FF5C5C" },
+            headerStyle: { backgroundColor: colors.brand },
             headerTintColor: "#ffffff",
             headerTitleStyle: { fontWeight: "800" },
           }}
         >
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Feed" component={FeedScreen} options={{ title: "Lecimy" }} />
+          <Stack.Screen name="Feed" component={FeedScreen} options={{ title: BRAND.name }} />
           <Stack.Screen
             name="OfferDetail"
             component={OfferDetailScreen}
