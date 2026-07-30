@@ -2,10 +2,13 @@
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { useI18n } from "../i18n";
+
 export function Loading({ label }: { label?: string } = {}): React.ReactElement {
+  const { t } = useI18n();
   return (
-    <View style={styles.center} accessibilityLabel={label ?? "Ładowanie"}>
-      <ActivityIndicator size="large" color="#FF5C5C" />
+    <View style={styles.center} accessibilityLabel={label ?? t.states.loading}>
+      <ActivityIndicator size="large" color="#FF5A5F" />
       {label ? <Text style={styles.sub}>{label}</Text> : null}
     </View>
   );
@@ -18,10 +21,11 @@ export function ErrorView({
   message: string;
   onRetry?: () => void;
 }): React.ReactElement {
+  const { t } = useI18n();
   return (
     <View style={styles.center}>
       <Text style={styles.title} accessibilityRole="alert">
-        Coś poszło nie tak
+        {t.states.error}
       </Text>
       <Text style={styles.sub}>{message}</Text>
       {onRetry ? (
@@ -29,9 +33,9 @@ export function ErrorView({
           style={styles.button}
           onPress={onRetry}
           accessibilityRole="button"
-          accessibilityLabel="Spróbuj ponownie"
+          accessibilityLabel={t.states.retry}
         >
-          <Text style={styles.buttonText}>Spróbuj ponownie</Text>
+          <Text style={styles.buttonText}>{t.states.retry}</Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -50,6 +54,6 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 10 },
   title: { fontSize: 18, fontWeight: "700", color: "#23272E" },
   sub: { fontSize: 14, color: "#64748b", textAlign: "center" },
-  button: { backgroundColor: "#FF5C5C", paddingVertical: 10, paddingHorizontal: 18, borderRadius: 8 },
+  button: { backgroundColor: "#FF5A5F", paddingVertical: 10, paddingHorizontal: 18, borderRadius: 8 },
   buttonText: { color: "#fff", fontWeight: "600" },
 });

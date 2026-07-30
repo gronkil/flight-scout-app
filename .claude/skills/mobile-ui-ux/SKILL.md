@@ -59,6 +59,19 @@ wyszukiwanie"), nie samego „Brak danych".
 - [ ] a11y: role + etykiety PL na każdym interaktywnym elemencie.
 - [ ] `npm run typecheck` i `npm run test` zielone (patrz CLAUDE.md).
 
+## Język i waluta (i18n) — obowiązkowo dla nowych ekranów
+
+Aplikacja jest dwujęzyczna (PL/EN) i wielowalutowa. **Żadnych napisów na sztywno.**
+
+- Teksty: `const { t } = useI18n()` (`src/i18n`), klucze w `src/i18n/messages.ts`.
+  Dodając napis — dopisz go w `pl` **i** `en` (test `tests/i18n.test.ts` pilnuje parytetu kluczy).
+- Kwoty: `const { money } = useI18n(); money(price, offer.currency)` — formatuje wg locale.
+  **Nie przeliczaj walut w kliencie** — kwota i kod przychodzą z API (backend wycenia po swoim kursie).
+- Formy zmienne: `nights(n)`, `trip(tripType)`, `changes(n)` z hooka (odmiana per język).
+- Zapytania o oferty przekazują wybraną walutę: `client.listOffers({ ..., currency })`,
+  a `currency` w `deps` `useAsync` odświeża feed po zmianie.
+- Ustawienia języka/waluty: ekran `SettingsScreen` (zapamiętane w SecureStore, domyślne z `Intl`).
+
 ## Współpraca
 
 Warstwę wizualną marki (logo, splash, ikona powiadomień, paleta) opisuje skill

@@ -5,6 +5,7 @@ export type RootStackParamList = {
   Feed: undefined;
   OfferDetail: { offer: OfferOut };
   Profiles: undefined;
+  Settings: undefined;
   Alerts: { profileId: string; profileName: string };
   Developer: undefined;
 };

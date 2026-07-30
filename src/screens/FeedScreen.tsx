@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native
 import { OfferCard } from "../components/OfferCard";
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
 import { DEFAULT_USER_ID } from "../config";
+import { useI18n } from "../i18n";
 import { sortOffersByScore } from "../lib/feed";
 import { registerForPushToken } from "../lib/push";
 import { useAsync } from "../lib/useAsync";
@@ -16,12 +17,16 @@ type Props = NativeStackScreenProps<RootStackParamList, "Feed">;
 
 export function FeedScreen({ navigation }: Props): React.ReactElement {
   const { client, userId, signOut } = useSession();
+  const { t, currency } = useI18n();
   // Feed dwustopniowo: 1. próba szybka (~2 s) — gdy serwer czuwa, oferty są od ręki.
   // Jeśli padnie (Render usypia usługę przy bezczynności), 2. próba jest cierpliwa i
   // pozwala cold-startowi się dokończyć — ekran sam się załaduje, bez klikania.
+  // Walutę przekazujemy do API — backend wycenia po swoim kursie. Zmiana waluty
+  // (deps) automatycznie odświeża feed.
   const { state, reload } = useAsync<OfferOut[]>(
-    (attempt) => client.listOffers({ min_grade: "B" }, attempt === 0 ? 2000 : 45000),
-    [],
+    (attempt) =>
+      client.listOffers({ min_grade: "B", currency }, attempt === 0 ? 2000 : 45000),
+    [client, currency],
     { maxAttempts: 2, retryDelayMs: 200 },
   );
 
@@ -53,39 +58,46 @@ export function FeedScreen({ navigation }: Props): React.ReactElement {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Najlepsze okazje</Text>
+        <Text style={styles.title}>{t.feed.title}</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
             onPress={() => navigation.navigate("Profiles")}
             accessibilityRole="button"
-            accessibilityLabel="Profile wyszukiwania"
+            accessibilityLabel={t.feed.profiles}
           >
-            <Text style={styles.link}>Profile</Text>
+            <Text style={styles.link}>{t.feed.profiles}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Settings")}
+            accessibilityRole="button"
+            accessibilityLabel={t.settings.title}
+          >
+            <Text style={styles.link}>⚙</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate("Developer")}
             accessibilityRole="button"
-            accessibilityLabel="Panel developera i diagnostyka"
+            accessibilityLabel={t.nav.developer}
           >
             <Text style={styles.link}>🛠</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleSignOut}
             accessibilityRole="button"
-            accessibilityLabel="Wyloguj"
+            accessibilityLabel={t.feed.signOut}
           >
-            <Text style={styles.signout}>Wyloguj</Text>
+            <Text style={styles.signout}>{t.feed.signOut}</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {state.status === "loading" ? (
-        <Loading label={state.attempt > 0 ? "⏳ Budzę serwer, chwilkę…" : undefined} />
+        <Loading label={state.attempt > 0 ? t.feed.waking : undefined} />
       ) : null}
       {state.status === "error" ? <ErrorView message={state.error} onRetry={reload} /> : null}
       {state.status === "ready" ? (
         state.data.length === 0 ? (
-          <EmptyView message="Brak ofert w ocenie A/B. Dodaj profil i uruchom wyszukiwanie." />
+          <EmptyView message={t.feed.empty} />
         ) : (
           <FlatList
             data={offers}
@@ -114,7 +126,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 22, fontWeight: "800", color: "#23272E" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 16 },
-  link: { color: "#FF5C5C", fontWeight: "600" },
+  link: { color: "#FF5A5F", fontWeight: "600" },
   signout: { color: "#64748b", fontWeight: "600" },
   list: { padding: 16, paddingTop: 0 },
 });

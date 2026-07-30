@@ -4,8 +4,9 @@ import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "r
 
 import { GradeBadge } from "../components/GradeBadge";
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
-import { formatPrice, offerDates, tripLabel } from "../lib/format";
-import { buildReturnCalendar, WEEKDAYS_PL, type CalCell } from "../lib/returnCalendar";
+import { useI18n } from "../i18n";
+import { offerDates } from "../lib/format";
+import { buildReturnCalendar, type CalCell } from "../lib/returnCalendar";
 import { useAsync } from "../lib/useAsync";
 import type { ReturnCalendarOut } from "../model/types";
 import type { RootStackParamList } from "../navigation";
@@ -13,9 +14,12 @@ import { useSession } from "../state/session";
 
 type Props = NativeStackScreenProps<RootStackParamList, "OfferDetail">;
 
+type Money = (amount: number, currency?: string) => string;
+
 export function OfferDetailScreen({ route }: Props): React.ReactElement {
   const { offer } = route.params;
   const { client } = useSession();
+  const { t, money, trip } = useI18n();
 
   function open(url: string | null): void {
     if (url) void Linking.openURL(url);
@@ -39,12 +43,12 @@ export function OfferDetailScreen({ route }: Props): React.ReactElement {
       <GradeBadge grade={offer.grade} />
 
       <View style={styles.box}>
-        <Row label="Cena" value={formatPrice(offer.price, offer.currency)} />
-        <Row label="Typ" value={tripLabel(offer.trip_type)} />
-        <Row label="Daty" value={offerDates(offer)} />
+        <Row label={t.offer.price} value={money(offer.price, offer.currency)} />
+        <Row label={t.offer.type} value={trip(offer.trip_type)} />
+        <Row label={t.offer.dates} value={offerDates(offer)} />
         <Row
-          label="Przesiadki"
-          value={offer.changes === 0 ? "bezpośredni" : String(offer.changes ?? "—")}
+          label={t.offer.changes}
+          value={offer.changes === 0 ? t.offer.direct : String(offer.changes ?? "—")}
         />
       </View>
 
@@ -53,25 +57,29 @@ export function OfferDetailScreen({ route }: Props): React.ReactElement {
           style={styles.button}
           onPress={() => open(offer.link)}
           accessibilityRole="button"
-          accessibilityLabel="Otwórz lot tam na Aviasales"
+          accessibilityLabel={t.offer.outbound}
         >
-          <Text style={styles.buttonText}>Lot tam →</Text>
+          <Text style={styles.buttonText}>{t.offer.outbound}</Text>
         </TouchableOpacity>
       ) : null}
 
       {canReturn ? (
         <View>
-          <Text style={styles.section}>Kiedy wrócić? Wybierz dzień powrotu</Text>
+          <Text style={styles.section}>{t.offer.whenReturn}</Text>
           {state.status === "loading" ? <Loading /> : null}
           {state.status === "error" ? <ErrorView message={state.error} onRetry={reload} /> : null}
           {state.status === "ready" && state.data ? (
             state.data.days.length === 0 ? (
-              <EmptyView message="Brak danych o powrotach w tym oknie. Sprawdź na Aviasales." />
+              <EmptyView message={t.offer.noReturns} />
             ) : (
               <ReturnCalendar
                 data={state.data}
                 outboundPrice={offer.price}
                 currency={offer.currency}
+                money={money}
+                weekdays={t.cal.weekdays}
+                monthNames={t.cal.months}
+                hint={t.offer.calHint}
                 onPick={open}
               />
             )
@@ -79,7 +87,7 @@ export function OfferDetailScreen({ route }: Props): React.ReactElement {
         </View>
       ) : null}
 
-      <Text style={styles.note}>Ceny z cache — potwierdź klikając w link.</Text>
+      <Text style={styles.note}>{t.offer.cacheNote}</Text>
     </ScrollView>
   );
 }
@@ -88,21 +96,29 @@ function ReturnCalendar({
   data,
   outboundPrice,
   currency,
+  money,
+  weekdays,
+  monthNames,
+  hint,
   onPick,
 }: {
   data: ReturnCalendarOut;
   outboundPrice: number;
   currency: string;
+  money: Money;
+  weekdays: readonly string[];
+  monthNames: readonly string[];
+  hint: string;
   onPick: (url: string | null) => void;
 }): React.ReactElement {
-  const months = buildReturnCalendar(data.days, data.depart_date);
+  const months = buildReturnCalendar(data.days, data.depart_date, [...monthNames]);
   return (
     <View style={styles.calWrap}>
       {months.map((m) => (
         <View key={`${m.year}-${m.month}`} style={styles.month}>
           <Text style={styles.monthLabel}>{m.label}</Text>
           <View style={styles.weekRow}>
-            {WEEKDAYS_PL.map((w) => (
+            {weekdays.map((w) => (
               <Text key={w} style={styles.weekday}>
                 {w}
               </Text>
@@ -116,6 +132,7 @@ function ReturnCalendar({
                   cell={cell}
                   total={cell.price !== null ? outboundPrice + cell.price : null}
                   currency={currency}
+                  money={money}
                   onPick={onPick}
                 />
               ))}
@@ -123,10 +140,7 @@ function ReturnCalendar({
           ))}
         </View>
       ))}
-      <Text style={styles.calHint}>
-        Cena = najtańszy powrót danego dnia. Kliknij dzień, by zobaczyć lot tam+powrót na
-        Aviasales. Najtańszy dzień podświetlony.
-      </Text>
+      <Text style={styles.calHint}>{hint}</Text>
     </View>
   );
 }
@@ -135,11 +149,13 @@ function Cell({
   cell,
   total,
   currency,
+  money,
   onPick,
 }: {
   cell: CalCell;
   total: number | null;
   currency: string;
+  money: Money;
   onPick: (url: string | null) => void;
 }): React.ReactElement {
   if (cell.date === null) return <View style={styles.cell} />;
@@ -150,16 +166,14 @@ function Cell({
     cell.past ? styles.cellPast : null,
     active && cell.cheapest ? styles.cellHot : active ? styles.cellHas : null,
   ];
-  const label = `Powrót ${cell.date}${
-    total !== null ? `, razem ~${Math.round(total)} ${currency.toUpperCase()}` : ""
-  }`;
+  const label = `${cell.date}${total !== null ? ` · ${money(total, currency)}` : ""}`;
   return (
     <TouchableOpacity
       style={cellStyle}
       disabled={!active}
       onPress={() => onPick(cell.link)}
       accessibilityRole={active ? "button" : "text"}
-      accessibilityLabel={active ? label : `${cell.date} — brak powrotu`}
+      accessibilityLabel={active ? label : (cell.date ?? "")}
     >
       <Text style={[styles.cellDay, cell.past ? styles.cellDayPast : null]}>{cell.day}</Text>
       <Text style={styles.cellPrice}>{cell.price !== null ? Math.round(cell.price) : "–"}</Text>
@@ -185,7 +199,7 @@ const styles = StyleSheet.create({
   rowLine: { flexDirection: "row", justifyContent: "space-between" },
   rowLabel: { color: "#64748b", fontSize: 14 },
   rowValue: { color: "#23272E", fontSize: 14, fontWeight: "600" },
-  button: { backgroundColor: "#FF5C5C", padding: 14, borderRadius: 8, alignItems: "center" },
+  button: { backgroundColor: "#FF5A5F", padding: 14, borderRadius: 8, alignItems: "center" },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   note: { color: "#94a3b8", fontSize: 12, textAlign: "center", marginTop: 8 },
   // kalendarz

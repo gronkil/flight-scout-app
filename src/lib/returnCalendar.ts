@@ -40,7 +40,11 @@ function daysInMonth(y: number, m: number): number {
  * Zbuduj kalendarz powrotów: po jednym miesiącu na każdy miesiąc, w którym są powroty.
  * `departDate` (YYYY-MM-DD) wyznacza, które dni są „przeszłe" (przed wylotem — nieaktywne).
  */
-export function buildReturnCalendar(days: ReturnDayOut[], departDate: string): CalMonth[] {
+export function buildReturnCalendar(
+  days: ReturnDayOut[],
+  departDate: string,
+  monthNames: string[] = PL_MONTHS,
+): CalMonth[] {
   const byDate = new Map<string, ReturnDayOut>();
   for (const d of days) byDate.set(d.return_date, d);
 
@@ -81,7 +85,7 @@ export function buildReturnCalendar(days: ReturnDayOut[], departDate: string): C
 
     const weeks: CalCell[][] = [];
     for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-    months.push({ year: y, month: m, label: `${PL_MONTHS[m - 1]} ${y}`, weeks });
+    months.push({ year: y, month: m, label: `${monthNames[m - 1]} ${y}`, weeks });
   }
 
   return months;

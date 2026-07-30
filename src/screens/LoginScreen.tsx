@@ -12,6 +12,7 @@ import {
 
 import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { isGoogleConfigured } from "../config";
+import { useI18n } from "../i18n";
 import type { RootStackParamList } from "../navigation";
 import { BRAND } from "../theme";
 import { useSession } from "../state/session";
@@ -29,6 +30,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
     registerWithPassword,
     loginWithGoogle,
   } = useSession();
+  const { t } = useI18n();
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -50,15 +52,15 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
       setError(null);
       loginWithGoogle(idToken)
         .then(() => navigation.replace("Feed"))
-        .catch((e: unknown) => setError(messageOf(e)))
+        .catch((e: unknown) => setError(messageOf(e, t.login.genericError)))
         .finally(() => setBusy(false));
     },
-    [loginWithGoogle, navigation],
+    [loginWithGoogle, navigation, t],
   );
 
   async function submit(): Promise<void> {
     if (!email.trim() || !password) {
-      setError("Podaj e-mail i hasło.");
+      setError(t.login.needCredentials);
       return;
     }
     setBusy(true);
@@ -69,7 +71,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
       else await loginWithPassword(email.trim(), password);
       navigation.replace("Feed");
     } catch (e: unknown) {
-      setError(messageOf(e));
+      setError(messageOf(e, t.login.genericError));
     } finally {
       setBusy(false);
     }
@@ -78,7 +80,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
   if (restoring) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#FF5C5C" />
+        <ActivityIndicator size="large" color="#FF5A5F" />
       </View>
     );
   }
@@ -86,12 +88,12 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>{BRAND.name}</Text>
-      <Text style={styles.brandTagline}>{BRAND.tagline}</Text>
+      <Text style={styles.brandTagline}>{t.login.tagline}</Text>
       <Text style={styles.sub}>
-        {mode === "login" ? "Zaloguj się na swoje konto." : "Załóż konto (e-mail i hasło)."}
+        {mode === "login" ? t.login.subLogin : t.login.subRegister}
       </Text>
 
-      <Text style={styles.label}>E-mail</Text>
+      <Text style={styles.label}>{t.login.email}</Text>
       <TextInput
         style={styles.input}
         value={email}
@@ -99,19 +101,19 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
         autoCapitalize="none"
         autoComplete="email"
         keyboardType="email-address"
-        placeholder="ty@example.com"
-        accessibilityLabel="E-mail"
+        placeholder={t.login.emailPlaceholder}
+        accessibilityLabel={t.login.email}
       />
 
-      <Text style={styles.label}>Hasło</Text>
+      <Text style={styles.label}>{t.login.password}</Text>
       <TextInput
         style={styles.input}
         value={password}
         onChangeText={setPassword}
         autoCapitalize="none"
         secureTextEntry
-        placeholder={mode === "register" ? "min. 8 znaków" : "hasło"}
-        accessibilityLabel="Hasło"
+        placeholder={mode === "register" ? t.login.passwordPlaceholderRegister : t.login.passwordPlaceholderLogin}
+        accessibilityLabel={t.login.password}
       />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -125,7 +127,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
         {busy ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>{mode === "login" ? "Zaloguj" : "Zarejestruj"}</Text>
+          <Text style={styles.buttonText}>{mode === "login" ? t.login.login : t.login.register}</Text>
         )}
       </TouchableOpacity>
 
@@ -137,37 +139,35 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
         accessibilityRole="button"
       >
         <Text style={styles.switchText}>
-          {mode === "login" ? "Nie masz konta? Zarejestruj się" : "Masz już konto? Zaloguj się"}
+          {mode === "login" ? t.login.toRegister : t.login.toLogin}
         </Text>
       </TouchableOpacity>
 
       <View style={styles.divider}>
         <View style={styles.line} />
-        <Text style={styles.or}>lub</Text>
+        <Text style={styles.or}>{t.login.or}</Text>
         <View style={styles.line} />
       </View>
 
       {isGoogleConfigured() ? (
         <GoogleSignInButton disabled={busy} onToken={onGoogleToken} onError={setError} />
       ) : (
-        <Text style={styles.hint}>
-          Logowanie Google wymaga konfiguracji (app.json → extra.google). Patrz docs/DEPLOY.md.
-        </Text>
+        <Text style={styles.hint}>{t.login.googleHint}</Text>
       )}
 
       <TouchableOpacity onPress={() => setShowAdvanced((v) => !v)} accessibilityRole="button">
-        <Text style={styles.advanced}>{showAdvanced ? "Ukryj ustawienia" : "Zaawansowane"}</Text>
+        <Text style={styles.advanced}>{showAdvanced ? t.login.advancedHide : t.login.advancedShow}</Text>
       </TouchableOpacity>
       {showAdvanced ? (
         <>
-          <Text style={styles.label}>Adres API</Text>
+          <Text style={styles.label}>{t.login.apiUrl}</Text>
           <TextInput
             style={styles.input}
             value={url}
             onChangeText={setUrl}
             autoCapitalize="none"
             keyboardType="url"
-            accessibilityLabel="Adres API"
+            accessibilityLabel={t.login.apiUrl}
           />
         </>
       ) : null}
@@ -175,9 +175,9 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
   );
 }
 
-function messageOf(e: unknown): string {
+function messageOf(e: unknown, fallback: string): string {
   if (e && typeof e === "object" && "message" in e) return String((e as { message: unknown }).message);
-  return "Coś poszło nie tak. Spróbuj ponownie.";
+  return fallback;
 }
 
 const styles = StyleSheet.create({
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   error: { color: "#dc2626", fontSize: 14, marginTop: 8 },
   button: {
-    backgroundColor: "#FF5C5C",
+    backgroundColor: "#FF5A5F",
     padding: 14,
     borderRadius: 8,
     alignItems: "center",
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  switchText: { color: "#FF5C5C", textAlign: "center", marginTop: 14, fontWeight: "600" },
+  switchText: { color: "#FF5A5F", textAlign: "center", marginTop: 14, fontWeight: "600" },
   divider: { flexDirection: "row", alignItems: "center", marginVertical: 18, gap: 10 },
   line: { flex: 1, height: 1, backgroundColor: "#e2e8f0" },
   or: { color: "#94a3b8", fontSize: 13 },

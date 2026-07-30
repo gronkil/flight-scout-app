@@ -1,7 +1,8 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { formatPrice, offerDates, pluralNights, tripLabel } from "../lib/format";
+import { useI18n } from "../i18n";
+import { offerDates } from "../lib/format";
 import type { OfferOut } from "../model/types";
 import { GradeBadge } from "./GradeBadge";
 
@@ -12,16 +13,14 @@ export function OfferCard({
   offer: OfferOut;
   onPress: (offer: OfferOut) => void;
 }): React.ReactElement {
-  const changes =
-    offer.changes === 0 ? "bezpośredni" : offer.changes === null ? "" : `${offer.changes} przes.`;
+  const { t, money, trip, changes, nights } = useI18n();
+  const changesText = changes(offer.changes);
   return (
     <TouchableOpacity
       style={styles.card}
       onPress={() => onPress(offer)}
       accessibilityRole="button"
-      accessibilityLabel={`${offer.city}, ${formatPrice(offer.price, offer.currency)}, ocena ${
-        offer.grade ?? "brak"
-      }`}
+      accessibilityLabel={`${offer.city}, ${money(offer.price, offer.currency)}, ${offer.grade ?? "?"}`}
     >
       <View style={styles.row}>
         <View style={styles.left}>
@@ -29,23 +28,25 @@ export function OfferCard({
             {offer.city} <Text style={styles.code}>({offer.dest})</Text>
           </Text>
           <Text style={styles.meta}>
-            {tripLabel(offer.trip_type)} · {offerDates(offer)}
-            {changes ? ` · ${changes}` : ""}
+            {trip(offer.trip_type)} · {offerDates(offer)}
+            {changesText ? ` · ${changesText}` : ""}
           </Text>
           {offer.flex ? (
             <Text style={styles.flex}>
-              💡 taniej o {Math.round(offer.flex.saved)} {offer.currency} niż {offer.flex.orig_date}
+              {t.offer.flexPrefix} {money(offer.flex.saved, offer.currency)} {t.offer.flexThan}{" "}
+              {offer.flex.orig_date}
             </Text>
           ) : null}
           {offer.ret ? (
             <Text style={styles.ret}>
-              ↩ powrót {offer.ret.return_date} · {formatPrice(offer.ret.price, offer.currency)} (pobyt{" "}
-              {pluralNights(offer.ret.nights)}) · razem ~{formatPrice(offer.ret.total, offer.currency)}
+              {t.offer.retPrefix} {offer.ret.return_date} · {money(offer.ret.price, offer.currency)} (
+              {t.offer.stay} {nights(offer.ret.nights)}) · {t.offer.total}
+              {money(offer.ret.total, offer.currency)}
             </Text>
           ) : null}
         </View>
         <View style={styles.right}>
-          <Text style={styles.price}>{formatPrice(offer.price, offer.currency)}</Text>
+          <Text style={styles.price}>{money(offer.price, offer.currency)}</Text>
           <GradeBadge grade={offer.grade} />
         </View>
       </View>
