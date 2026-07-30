@@ -16,7 +16,14 @@ type Props = NativeStackScreenProps<RootStackParamList, "Feed">;
 
 export function FeedScreen({ navigation }: Props): React.ReactElement {
   const { client, userId, signOut } = useSession();
-  const { state, reload } = useAsync<OfferOut[]>(() => client.listOffers({ min_grade: "B" }), []);
+  // Feed dwustopniowo: 1. próba szybka (~2 s) — gdy serwer czuwa, oferty są od ręki.
+  // Jeśli padnie (Render usypia usługę przy bezczynności), 2. próba jest cierpliwa i
+  // pozwala cold-startowi się dokończyć — ekran sam się załaduje, bez klikania.
+  const { state, reload } = useAsync<OfferOut[]>(
+    (attempt) => client.listOffers({ min_grade: "B" }, attempt === 0 ? 2000 : 45000),
+    [],
+    { maxAttempts: 2, retryDelayMs: 200 },
+  );
 
   // Sortujemy raz na zmianę danych, a nie przy każdym renderze (spinner push, nawigacja itp.).
   const offers = useMemo(
@@ -72,7 +79,9 @@ export function FeedScreen({ navigation }: Props): React.ReactElement {
         </View>
       </View>
 
-      {state.status === "loading" ? <Loading /> : null}
+      {state.status === "loading" ? (
+        <Loading label={state.attempt > 0 ? "⏳ Budzę serwer, chwilkę…" : undefined} />
+      ) : null}
       {state.status === "error" ? <ErrorView message={state.error} onRetry={reload} /> : null}
       {state.status === "ready" ? (
         state.data.length === 0 ? (

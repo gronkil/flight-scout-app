@@ -2,10 +2,11 @@
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export function Loading(): React.ReactElement {
+export function Loading({ label }: { label?: string } = {}): React.ReactElement {
   return (
-    <View style={styles.center} accessibilityLabel="Ładowanie">
+    <View style={styles.center} accessibilityLabel={label ?? "Ładowanie"}>
       <ActivityIndicator size="large" color="#FF5C5C" />
+      {label ? <Text style={styles.sub}>{label}</Text> : null}
     </View>
   );
 }

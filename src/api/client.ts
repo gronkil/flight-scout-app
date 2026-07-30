@@ -59,7 +59,12 @@ export class ApiClient {
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    timeoutMs: number = this.timeoutMs,
+  ): Promise<T> {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     const auth = this.getAuth();
     // Token sesji (z logowania) w standardowym nagłówku Bearer. Brak tokenu = żądanie
@@ -69,7 +74,7 @@ export class ApiClient {
     // Twardy limit czasu: po timeoutMs przerywamy żądanie (AbortController) zamiast
     // trzymać użytkownika na spinnerze bez końca, gdy backend/sieć są zawieszone.
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const resp = await this.fetchFn(`${this.baseUrl}${path}`, {
@@ -107,7 +112,7 @@ export class ApiClient {
       if (controller.signal.aborted) {
         throw new ApiError(
           0,
-          `Serwer nie odpowiada (przekroczono ${Math.round(this.timeoutMs / 1000)} s). Spróbuj ponownie.`,
+          `Serwer nie odpowiada (przekroczono ${Math.round(timeoutMs / 1000)} s). Spróbuj ponownie.`,
         );
       }
       // Pozostałe błędy sieci (brak internetu, DNS, TLS) — czytelny komunikat zamiast surowego wyjątku.
@@ -160,8 +165,10 @@ export class ApiClient {
   }
 
   // --- Feed ---
-  listOffers(filters: OfferFilters = {}): Promise<OfferOut[]> {
-    return this.request("GET", `/offers${this.query({ ...filters })}`);
+  // timeoutMs pozwala ekranowi feedu użyć szybkiej pierwszej próby (serwer czuwa → oferty
+  // od ręki) i osobnej, cierpliwej próby wybudzenia (Render usypia usługę przy bezczynności).
+  listOffers(filters: OfferFilters = {}, timeoutMs?: number): Promise<OfferOut[]> {
+    return this.request("GET", `/offers${this.query({ ...filters })}`, undefined, timeoutMs);
   }
 
   // Kalendarz powrotów DEST→origin dla wybranego lotu tam („kiedy można wrócić").
