@@ -53,6 +53,16 @@ npm run build       # expo export --platform android (opcjonalnie, cięższe)
 Pushuj na `dev` dopiero, gdy `typecheck` i `test` są zielone lokalnie — inaczej
 pipeline i tak zatrzyma się na CI i `main` nie dostanie zmian.
 
+## System nadzoru pipeline'u (agenci + skille)
+
+Repo ma wbudowany system pilnujący pipeline'u dev→CI→main→APK:
+
+- **Skille** (`.claude/skills/`): `pipeline-guard` (procedura nadzoru), `apk-audit` (audyt buildu APK).
+- **Subagenci** (`.claude/agents/`): `ci-monitor` (read-only status), `build-doctor` (diagnoza + naprawa czerwonego buildu na `dev`), `apk-auditor` (audyt → `docs/apk-audit.md`).
+- **Orkiestrator** (`.claude/agents/pipeline-orchestrator.md`): koordynuje powyższych i prowadzi cykliczny nadzór (sam się przekłada przez `send_later`, aż build jest zielony albo naprawiony).
+
+Gdy użytkownik prosi „pilnuj CI / sprawdź build / napraw pipeline / co z APK" → uruchom orkiestratora (`pipeline-orchestrator`) albo postępuj wg skilla `pipeline-guard`. Aktualny audyt APK: `docs/apk-audit.md`.
+
 ## Struktura (skrót)
 
 - `src/screens/` — ekrany, `src/components/` — komponenty UI
