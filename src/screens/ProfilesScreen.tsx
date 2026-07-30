@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
+import { availableCities, cityLabel } from "../lib/cities";
 import { upcomingMonths } from "../lib/format";
 import { useAsync } from "../lib/useAsync";
 import type { ProfileOut } from "../model/types";
@@ -22,20 +23,33 @@ type Props = NativeStackScreenProps<RootStackParamList, "Profiles">;
 export function ProfilesScreen({ navigation }: Props): React.ReactElement {
   const { client } = useSession();
   const { state, reload } = useAsync<ProfileOut[]>(() => client.listProfiles(), []);
-  const [origins, setOrigins] = useState("WAW");
+  const [origins, setOrigins] = useState<string[]>(["WAW"]);
   const [scope, setScope] = useState("europa");
   const [busy, setBusy] = useState(false);
   const [searchingId, setSearchingId] = useState<string | null>(null);
 
+  // Blokada duplikatów: dodajemy tylko miasto, którego jeszcze nie ma na liście.
+  function addOrigin(code: string): void {
+    setOrigins((prev) => (prev.includes(code) ? prev : [...prev, code]));
+  }
+
+  function removeOrigin(code: string): void {
+    setOrigins((prev) => prev.filter((c) => c !== code));
+  }
+
   async function create(): Promise<void> {
+    if (origins.length === 0) {
+      RNAlert.alert("Wybierz miasto", "Zaznacz co najmniej jedno miasto wylotu.");
+      return;
+    }
     setBusy(true);
     try {
       await client.createProfile({
-        origins: origins.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean),
+        origins,
         scope,
         min_grade: "B",
       });
-      setOrigins("WAW");
+      setOrigins(["WAW"]);
       reload();
     } catch (e) {
       RNAlert.alert("Nie udało się", e instanceof Error ? e.message : String(e));
@@ -97,8 +111,37 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
   return (
     <View style={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.label}>Skąd (kody IATA, po przecinku)</Text>
-        <TextInput style={styles.input} value={origins} onChangeText={setOrigins} autoCapitalize="characters" />
+        <Text style={styles.label}>Skąd (wybierz miasta)</Text>
+        {origins.length > 0 ? (
+          <View style={styles.chips}>
+            {origins.map((code) => (
+              <TouchableOpacity
+                key={code}
+                style={styles.chipSelected}
+                onPress={() => removeOrigin(code)}
+                accessibilityRole="button"
+                accessibilityLabel={`Usuń ${cityLabel(code)}`}
+              >
+                <Text style={styles.chipSelectedText}>{cityLabel(code)} ✕</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.hint}>Nie wybrano żadnego miasta.</Text>
+        )}
+        <View style={styles.chips}>
+          {availableCities(origins).map((city) => (
+            <TouchableOpacity
+              key={city.code}
+              style={styles.chip}
+              onPress={() => addOrigin(city.code)}
+              accessibilityRole="button"
+              accessibilityLabel={`Dodaj ${city.name}`}
+            >
+              <Text style={styles.chipText}>{city.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
         <Text style={styles.label}>Zakres</Text>
         <TextInput style={styles.input} value={scope} onChangeText={setScope} autoCapitalize="none" />
         <TouchableOpacity
@@ -124,7 +167,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
             renderItem={({ item }) => (
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>
-                  {item.origins.join(", ")} · {item.scope}
+                  {item.origins.map(cityLabel).join(", ")} · {item.scope}
                 </Text>
                 <Text style={styles.cardMeta}>min. ocena {item.min_grade} · {item.trip_type}</Text>
                 <View style={styles.actions}>
@@ -141,7 +184,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
                     onPress={() =>
                       navigation.navigate("Alerts", {
                         profileId: item.id,
-                        profileName: item.origins.join(", "),
+                        profileName: item.origins.map(cityLabel).join(", "),
                       })
                     }
                     accessibilityRole="button"
@@ -149,7 +192,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
                     <Text style={styles.action}>Alerty</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() => remove(item.id, `${item.origins.join(", ")} · ${item.scope}`)}
+                    onPress={() => remove(item.id, `${item.origins.map(cityLabel).join(", ")} · ${item.scope}`)}
                     accessibilityRole="button"
                   >
                     <Text style={styles.actionDanger}>Usuń</Text>
@@ -169,6 +212,24 @@ const styles = StyleSheet.create({
   form: { padding: 16, gap: 6, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e5e7eb" },
   label: { fontSize: 13, color: "#334155" },
   input: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 8, padding: 10, fontSize: 15 },
+  hint: { fontSize: 13, color: "#94a3b8", fontStyle: "italic" },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: {
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    backgroundColor: "#f8fafc",
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  chipText: { color: "#334155", fontSize: 14 },
+  chipSelected: {
+    backgroundColor: "#FF5C5C",
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  chipSelectedText: { color: "#fff", fontSize: 14, fontWeight: "600" },
   button: { backgroundColor: "#FF5C5C", padding: 12, borderRadius: 8, alignItems: "center", marginTop: 8 },
   disabled: { opacity: 0.5 },
   buttonText: { color: "#fff", fontWeight: "700" },
