@@ -9,8 +9,9 @@ name: Keep API warm
 
 on:
   schedule:
-    # Co 10 minut. GitHub bywa, że opóźnia schedule, ale to wystarcza, by usługa nie usnęła.
-    - cron: "*/10 * * * *"
+    # Co 5 minut. GitHub bywa, że opóźnia schedule, więc gęstszy ping mocniej trzyma
+    # usługę "na ciepło" (Render usypia po ~15 min bezczynności).
+    - cron: "*/5 * * * *"
   workflow_dispatch: {}
 
 permissions:
