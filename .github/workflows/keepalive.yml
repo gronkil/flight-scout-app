@@ -1,0 +1,54 @@
+name: Keep API warm
+
+# Render (darmowy tier) usypia usługę po ~15 min bezczynności — pierwsze wejście do
+# aplikacji budzi ją (cold start 30-50 s) i feed wygląda jakby "nie działał".
+# Ten workflow pinguje API co ~10 min, żeby serwer nie zasypiał i apka ładowała się od ręki.
+#
+# URL bierzemy z app.json (extra.apiBaseUrl) — jedno źródło prawdy, bez duplikowania adresu.
+# Nie wymaga żadnych sekretów ani dostępu do repo backendu.
+
+on:
+  schedule:
+    # Co 10 minut. GitHub bywa, że opóźnia schedule, ale to wystarcza, by usługa nie usnęła.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Nie kolejkuj nakładających się pingów.
+concurrency:
+  group: keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Odczytaj adres API z app.json
+        id: cfg
+        run: |
+          url="$(jq -r '.expo.extra.apiBaseUrl // empty' app.json)"
+          if [ -z "$url" ]; then
+            echo "Brak extra.apiBaseUrl w app.json — nie ma czego pingować." >&2
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Ping (wybudza serwer, jeśli spał)
+        run: |
+          url="${{ steps.cfg.outputs.url }}"
+          echo "Pinguję $url"
+          # Cold start potrafi trwać ~50 s, więc dajemy czas i ponawiamy. Każda odpowiedź HTTP
+          # (także 404) oznacza, że usługa wstała — liczy się dobicie do serwera, nie treść.
+          code="$(curl -sS -o /dev/null -w '%{http_code}' \
+                    --connect-timeout 15 --max-time 90 \
+                    --retry 3 --retry-delay 10 --retry-all-errors \
+                    "$url" || echo "000")"
+          echo "HTTP $code"
+          if [ "$code" = "000" ]; then
+            echo "Serwer nieosiągalny po ponowieniach." >&2
+            exit 1
+          fi
