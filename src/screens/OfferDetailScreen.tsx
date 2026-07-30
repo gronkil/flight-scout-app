@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React from "react";
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GradeBadge } from "../components/GradeBadge";
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
@@ -10,16 +11,18 @@ import { buildReturnCalendar, type CalCell } from "../lib/returnCalendar";
 import { useAsync } from "../lib/useAsync";
 import type { ReturnCalendarOut } from "../model/types";
 import type { RootStackParamList } from "../navigation";
+import { colors } from "../theme";
 import { useSession } from "../state/session";
 
 type Props = NativeStackScreenProps<RootStackParamList, "OfferDetail">;
 
 type Money = (amount: number, currency?: string) => string;
 
-export function OfferDetailScreen({ route }: Props): React.ReactElement {
+export function OfferDetailScreen({ route, navigation }: Props): React.ReactElement {
   const { offer } = route.params;
   const { client } = useSession();
   const { t, money, trip } = useI18n();
+  const insets = useSafeAreaInsets();
 
   function open(url: string | null): void {
     if (url) void Linking.openURL(url);
@@ -36,14 +39,26 @@ export function OfferDetailScreen({ route }: Props): React.ReactElement {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.city}>
-        {offer.city} <Text style={styles.code}>({offer.origin} → {offer.dest})</Text>
-      </Text>
-      <GradeBadge grade={offer.grade} />
+    <View style={styles.screen}>
+      <View style={[styles.hero, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel={t.offer.back}
+        >
+          <Text style={styles.back}>
+            ‹ {t.offer.back} · {offer.origin} → {offer.dest}
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.heroCity}>{offer.city}</Text>
+        <View style={styles.heroRow}>
+          <Text style={styles.heroPrice}>{money(offer.price, offer.currency)}</Text>
+          <GradeBadge grade={offer.grade} tone="onColor" />
+        </View>
+      </View>
 
+      <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.box}>
-        <Row label={t.offer.price} value={money(offer.price, offer.currency)} />
         <Row label={t.offer.type} value={trip(offer.trip_type)} />
         <Row label={t.offer.dates} value={offerDates(offer)} />
         <Row
@@ -88,7 +103,8 @@ export function OfferDetailScreen({ route }: Props): React.ReactElement {
       ) : null}
 
       <Text style={styles.note}>{t.offer.cacheNote}</Text>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -191,9 +207,13 @@ function Row({ label, value }: { label: string; value: string }): React.ReactEle
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, gap: 14, backgroundColor: "#f8fafc" },
-  city: { fontSize: 24, fontWeight: "800", color: "#23272E" },
-  code: { fontSize: 15, color: "#94a3b8", fontWeight: "500" },
+  screen: { flex: 1, backgroundColor: "#f8fafc" },
+  hero: { backgroundColor: colors.brand, paddingHorizontal: 16, paddingBottom: 20 },
+  back: { color: "rgba(255,255,255,0.92)", fontSize: 12, fontWeight: "600" },
+  heroCity: { color: "#fff", fontSize: 26, fontWeight: "800", letterSpacing: -0.5, marginTop: 6 },
+  heroRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginTop: 8 },
+  heroPrice: { color: "#fff", fontSize: 34, fontWeight: "800", letterSpacing: -0.5 },
+  container: { padding: 20, gap: 14 },
   box: { backgroundColor: "#fff", borderRadius: 12, borderWidth: 1, borderColor: "#e5e7eb", padding: 14, gap: 6 },
   section: { fontSize: 16, fontWeight: "800", color: "#23272E", marginTop: 6, marginBottom: 8 },
   rowLine: { flexDirection: "row", justifyContent: "space-between" },

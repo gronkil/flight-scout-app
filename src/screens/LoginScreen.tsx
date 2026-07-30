@@ -2,6 +2,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,13 +10,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { isGoogleConfigured } from "../config";
 import { useI18n } from "../i18n";
 import type { RootStackParamList } from "../navigation";
-import { BRAND } from "../theme";
+import { BRAND, colors } from "../theme";
 import { useSession } from "../state/session";
+
+const MARK = require("../../assets/notification-icon.png");
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 type Mode = "login" | "register";
@@ -31,6 +35,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
     loginWithGoogle,
   } = useSession();
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -87,8 +92,13 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>{BRAND.name}</Text>
-      <Text style={styles.brandTagline}>{t.login.tagline}</Text>
+      <View style={[styles.top, { paddingTop: insets.top + 28 }]}>
+        <Image source={MARK} style={styles.mark} accessibilityIgnoresInvertColors />
+        <Text style={styles.title}>{BRAND.name}</Text>
+        <Text style={styles.brandTagline}>{t.login.tagline}</Text>
+      </View>
+
+      <View style={styles.body}>
       <Text style={styles.sub}>
         {mode === "login" ? t.login.subLogin : t.login.subRegister}
       </Text>
@@ -171,6 +181,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
           />
         </>
       ) : null}
+      </View>
     </ScrollView>
   );
 }
@@ -181,10 +192,18 @@ function messageOf(e: unknown, fallback: string): string {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 24, gap: 8, backgroundColor: "#f8fafc", flexGrow: 1, justifyContent: "center" },
-  center: { alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 34, fontWeight: "800", color: "#23272E", letterSpacing: -1 },
-  brandTagline: { fontSize: 15, fontWeight: "600", color: "#FF5A5F", marginBottom: 20 },
+  container: { backgroundColor: "#f8fafc", flexGrow: 1 },
+  top: {
+    backgroundColor: colors.ink,
+    alignItems: "center",
+    paddingBottom: 28,
+    paddingHorizontal: 24,
+  },
+  mark: { width: 44, height: 44, resizeMode: "contain", marginBottom: 8 },
+  body: { padding: 24, gap: 8 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 34, fontWeight: "800", color: "#fff", letterSpacing: -1 },
+  brandTagline: { fontSize: 14, fontWeight: "600", color: "#FFB9AE", marginTop: 2 },
   sub: { fontSize: 14, color: "#64748b", marginBottom: 12 },
   label: { fontSize: 13, color: "#334155", marginTop: 8 },
   input: {

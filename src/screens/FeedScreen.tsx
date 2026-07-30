@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useMemo } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { OfferCard } from "../components/OfferCard";
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
@@ -11,13 +12,17 @@ import { registerForPushToken } from "../lib/push";
 import { useAsync } from "../lib/useAsync";
 import type { OfferOut } from "../model/types";
 import type { RootStackParamList } from "../navigation";
+import { BRAND, colors } from "../theme";
 import { useSession } from "../state/session";
+
+const MARK = require("../../assets/notification-icon.png");
 
 type Props = NativeStackScreenProps<RootStackParamList, "Feed">;
 
 export function FeedScreen({ navigation }: Props): React.ReactElement {
   const { client, userId, signOut } = useSession();
   const { t, currency } = useI18n();
+  const insets = useSafeAreaInsets();
   // Feed dwustopniowo: 1. próba szybka (~2 s) — gdy serwer czuwa, oferty są od ręki.
   // Jeśli padnie (Render usypia usługę przy bezczynności), 2. próba jest cierpliwa i
   // pozwala cold-startowi się dokończyć — ekran sam się załaduje, bez klikania.
@@ -57,8 +62,11 @@ export function FeedScreen({ navigation }: Props): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t.feed.title}</Text>
+      <View style={[styles.appbar, { paddingTop: insets.top + 10 }]}>
+        <View style={styles.brand}>
+          <Image source={MARK} style={styles.mark} accessibilityIgnoresInvertColors />
+          <Text style={styles.wordmark}>{BRAND.name}</Text>
+        </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
             onPress={() => navigation.navigate("Profiles")}
@@ -72,14 +80,14 @@ export function FeedScreen({ navigation }: Props): React.ReactElement {
             accessibilityRole="button"
             accessibilityLabel={t.settings.title}
           >
-            <Text style={styles.link}>⚙</Text>
+            <Text style={styles.icon}>⚙</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate("Developer")}
             accessibilityRole="button"
             accessibilityLabel={t.nav.developer}
           >
-            <Text style={styles.link}>🛠</Text>
+            <Text style={styles.icon}>🛠</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleSignOut}
@@ -90,6 +98,8 @@ export function FeedScreen({ navigation }: Props): React.ReactElement {
           </TouchableOpacity>
         </View>
       </View>
+
+      <Text style={styles.h1}>{t.feed.title}</Text>
 
       {state.status === "loading" ? (
         <Loading label={state.attempt > 0 ? t.feed.waking : undefined} />
@@ -117,16 +127,22 @@ export function FeedScreen({ navigation }: Props): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f1f5f9" },
-  header: {
+  container: { flex: 1, backgroundColor: colors.bg },
+  appbar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    backgroundColor: colors.brand,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  title: { fontSize: 22, fontWeight: "800", color: "#23272E" },
-  headerActions: { flexDirection: "row", alignItems: "center", gap: 16 },
-  link: { color: "#FF5A5F", fontWeight: "600" },
-  signout: { color: "#64748b", fontWeight: "600" },
-  list: { padding: 16, paddingTop: 0 },
+  brand: { flexDirection: "row", alignItems: "center", gap: 8 },
+  mark: { width: 20, height: 20, resizeMode: "contain" },
+  wordmark: { fontSize: 18, fontWeight: "800", color: "#fff", letterSpacing: -0.3 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 14 },
+  link: { color: "#fff", fontWeight: "700", fontSize: 13 },
+  icon: { color: "#fff", fontSize: 15 },
+  signout: { color: "rgba(255,255,255,0.85)", fontWeight: "700", fontSize: 13 },
+  h1: { fontSize: 22, fontWeight: "800", color: colors.text, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4, letterSpacing: -0.4 },
+  list: { padding: 16, paddingTop: 12 },
 });

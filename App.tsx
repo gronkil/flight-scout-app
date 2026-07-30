@@ -13,7 +13,7 @@ import { OfferDetailScreen } from "./src/screens/OfferDetailScreen";
 import { ProfilesScreen } from "./src/screens/ProfilesScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
 import { SessionProvider } from "./src/state/session";
-import { BRAND, colors } from "./src/theme";
+import { colors } from "./src/theme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -30,11 +30,11 @@ function Navigation(): React.ReactElement {
         }}
       >
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Feed" component={FeedScreen} options={{ title: BRAND.name }} />
+        <Stack.Screen name="Feed" component={FeedScreen} options={{ headerShown: false }} />
         <Stack.Screen
           name="OfferDetail"
           component={OfferDetailScreen}
-          options={{ title: t.nav.offerDetail }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen name="Profiles" component={ProfilesScreen} options={{ title: t.nav.profiles }} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: t.nav.settings }} />

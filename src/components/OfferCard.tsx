@@ -4,6 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useI18n } from "../i18n";
 import { offerDates } from "../lib/format";
 import type { OfferOut } from "../model/types";
+import { cardShadow, colors } from "../theme";
 import { GradeBadge } from "./GradeBadge";
 
 export function OfferCard({
@@ -56,20 +57,21 @@ export function OfferCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 12,
+    ...cardShadow,
   },
   row: { flexDirection: "row", justifyContent: "space-between" },
   left: { flex: 1, paddingRight: 12, gap: 4 },
   right: { alignItems: "flex-end", gap: 8 },
-  city: { fontSize: 17, fontWeight: "700", color: "#23272E" },
-  code: { fontSize: 13, color: "#94a3b8", fontWeight: "500" },
-  meta: { fontSize: 13, color: "#64748b" },
-  flex: { fontSize: 12, color: "#b45309" },
-  ret: { fontSize: 12, color: "#23272E" },
-  price: { fontSize: 20, fontWeight: "800", color: "#23272E" },
+  city: { fontSize: 17, fontWeight: "700", color: colors.text },
+  code: { fontSize: 13, color: colors.textFaint, fontWeight: "500" },
+  meta: { fontSize: 13, color: colors.textMuted },
+  flex: { fontSize: 12, color: "#B45309", fontWeight: "600" },
+  ret: { fontSize: 12, color: colors.text },
+  price: { fontSize: 20, fontWeight: "800", color: colors.text },
 });

@@ -48,6 +48,7 @@ const pl = {
     settings: "Ustawienia",
   },
   offer: {
+    back: "Wróć",
     direct: "bezpośredni",
     price: "Cena",
     type: "Typ",
@@ -161,6 +162,7 @@ const en: typeof pl = {
     settings: "Settings",
   },
   offer: {
+    back: "Back",
     direct: "direct",
     price: "Price",
     type: "Type",
