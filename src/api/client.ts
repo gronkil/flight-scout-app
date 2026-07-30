@@ -30,7 +30,14 @@ export interface ApiConfig {
   getAuth?: () => string | null;
   // Wstrzykiwalny fetch (testy podają atrapę); domyślnie globalny.
   fetchFn?: typeof fetch;
+  // Górny limit czasu pojedynczego żądania (ms). RN-owy fetch NIE ma domyślnego timeoutu —
+  // bez tego zawieszony backend trzyma użytkownika na spinnerze w nieskończoność.
+  timeoutMs?: number;
 }
+
+// Domyślny timeout żądania. Wystarczająco długi na wolne wyszukiwania, ale skończony —
+// użytkownik dostaje czytelny błąd zamiast czekać minutami.
+export const DEFAULT_TIMEOUT_MS = 15000;
 
 export interface OfferFilters {
   min_grade?: string;
@@ -43,11 +50,13 @@ export class ApiClient {
   private readonly baseUrl: string;
   private readonly getAuth: () => string | null;
   private readonly fetchFn: typeof fetch;
+  private readonly timeoutMs: number;
 
   constructor(config: ApiConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.getAuth = config.getAuth ?? (() => null);
     this.fetchFn = config.fetchFn ?? fetch;
+    this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -57,34 +66,55 @@ export class ApiClient {
     // anonimowe (np. samo logowanie/rejestracja). Zero sekretów zaszytych w kodzie.
     if (auth) headers["Authorization"] = `Bearer ${auth}`;
 
-    const resp = await this.fetchFn(`${this.baseUrl}${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
+    // Twardy limit czasu: po timeoutMs przerywamy żądanie (AbortController) zamiast
+    // trzymać użytkownika na spinnerze bez końca, gdy backend/sieć są zawieszone.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
-    if (resp.status === 204) return undefined as T;
-    const text = await resp.text();
-    // Odpowiedź nie zawsze jest JSON-em (np. serwer zwraca zwykły tekst "Internal Server
-    // Error" przy 500). Parsujemy defensywnie, żeby nie wywalić się na JSON.parse.
-    let data: unknown = undefined;
-    if (text) {
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = undefined;
+    try {
+      const resp = await this.fetchFn(`${this.baseUrl}${path}`, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (resp.status === 204) return undefined as T;
+      const text = await resp.text();
+      // Odpowiedź nie zawsze jest JSON-em (np. serwer zwraca zwykły tekst "Internal Server
+      // Error" przy 500). Parsujemy defensywnie, żeby nie wywalić się na JSON.parse.
+      let data: unknown = undefined;
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = undefined;
+        }
       }
+      if (!resp.ok) {
+        const detail =
+          data && typeof data === "object" && data !== null && "detail" in data
+            ? String((data as { detail: unknown }).detail)
+            : resp.status >= 500
+              ? `Błąd serwera (${resp.status}). Spróbuj ponownie za chwilę.`
+              : resp.statusText || `Błąd ${resp.status}`;
+        throw new ApiError(resp.status, detail);
+      }
+      return data as T;
+    } catch (e) {
+      if (e instanceof ApiError) throw e;
+      // Timeout: żądanie przerwane przez AbortController po przekroczeniu limitu.
+      if (controller.signal.aborted) {
+        throw new ApiError(
+          0,
+          `Serwer nie odpowiada (przekroczono ${Math.round(this.timeoutMs / 1000)} s). Spróbuj ponownie.`,
+        );
+      }
+      // Pozostałe błędy sieci (brak internetu, DNS, TLS) — czytelny komunikat zamiast surowego wyjątku.
+      throw new ApiError(0, "Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie.");
+    } finally {
+      clearTimeout(timer);
     }
-    if (!resp.ok) {
-      const detail =
-        data && typeof data === "object" && data !== null && "detail" in data
-          ? String((data as { detail: unknown }).detail)
-          : resp.status >= 500
-            ? `Błąd serwera (${resp.status}). Spróbuj ponownie za chwilę.`
-            : resp.statusText || `Błąd ${resp.status}`;
-      throw new ApiError(resp.status, detail);
-    }
-    return data as T;
   }
 
   private query(params: Record<string, string | number | undefined>): string {

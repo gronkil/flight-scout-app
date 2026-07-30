@@ -25,6 +25,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
   const [origins, setOrigins] = useState("WAW");
   const [scope, setScope] = useState("europa");
   const [busy, setBusy] = useState(false);
+  const [searchingId, setSearchingId] = useState<string | null>(null);
 
   async function create(): Promise<void> {
     setBusy(true);
@@ -66,23 +67,30 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
   async function search(id: string): Promise<void> {
     // Szukaj w oknie najbliższych miesięcy (bieżący + 2), inaczej pod koniec miesiąca
     // znajdujemy głównie loty z przeszłymi datami, które feed ukrywa → pusta strona główna.
+    // Każdy miesiąc to ciężkie zapytanie do backendu — puszczamy je RÓWNOLEGLE (Promise.all),
+    // żeby całość trwała ~jedno zapytanie zamiast sumy trzech (wcześniej pętla sekwencyjna).
     const months = upcomingMonths(3);
-    let total = 0;
-    const errors: string[] = [];
-    for (const m of months) {
-      try {
-        const offers = await client.searchProfile(id, m);
-        total += offers.length;
-      } catch (e) {
-        errors.push(e instanceof Error ? e.message : String(e));
+    setSearchingId(id);
+    try {
+      const results = await Promise.all(
+        months.map((m) =>
+          client.searchProfile(id, m).then(
+            (offers) => ({ ok: true as const, count: offers.length }),
+            (e: unknown) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }),
+          ),
+        ),
+      );
+      const total = results.reduce((sum, r) => (r.ok ? sum + r.count : sum), 0);
+      const errors = results.flatMap((r) => (r.ok ? [] : [r.error]));
+      if (total > 0) {
+        RNAlert.alert("Wyszukano", `Znaleziono ${total} ofert A/B (najbliższe miesiące). Zobacz w feedzie.`);
+      } else if (errors.length === months.length) {
+        RNAlert.alert("Błąd wyszukiwania", errors[0]);
+      } else {
+        RNAlert.alert("Wyszukano", "Brak ofert A/B w najbliższych miesiącach dla tego profilu.");
       }
-    }
-    if (total > 0) {
-      RNAlert.alert("Wyszukano", `Znaleziono ${total} ofert A/B (najbliższe miesiące). Zobacz w feedzie.`);
-    } else if (errors.length === months.length) {
-      RNAlert.alert("Błąd wyszukiwania", errors[0]);
-    } else {
-      RNAlert.alert("Wyszukano", "Brak ofert A/B w najbliższych miesiącach dla tego profilu.");
+    } finally {
+      setSearchingId(null);
     }
   }
 
@@ -120,8 +128,14 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
                 </Text>
                 <Text style={styles.cardMeta}>min. ocena {item.min_grade} · {item.trip_type}</Text>
                 <View style={styles.actions}>
-                  <TouchableOpacity onPress={() => search(item.id)} accessibilityRole="button">
-                    <Text style={styles.action}>Szukaj teraz</Text>
+                  <TouchableOpacity
+                    onPress={() => search(item.id)}
+                    disabled={searchingId !== null}
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles.action, searchingId !== null && styles.actionMuted]}>
+                      {searchingId === item.id ? "Szukam…" : "Szukaj teraz"}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() =>
@@ -164,5 +178,6 @@ const styles = StyleSheet.create({
   cardMeta: { fontSize: 13, color: "#64748b", marginTop: 2 },
   actions: { flexDirection: "row", gap: 20, marginTop: 10 },
   action: { color: "#FF5C5C", fontWeight: "600" },
+  actionMuted: { opacity: 0.5 },
   actionDanger: { color: "#b91c1c", fontWeight: "600" },
 });
