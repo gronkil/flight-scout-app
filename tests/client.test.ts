@@ -75,6 +75,45 @@ describe("ApiClient", () => {
     expect(new ApiError(500, "x")).toBeInstanceOf(Error);
   });
 
+  it("zamienia błąd sieci na czytelny ApiError (status 0)", async () => {
+    const fetchFn = vi.fn(async () => {
+      throw new TypeError("Network request failed");
+    });
+    const client = new ApiClient({ baseUrl: "http://api", fetchFn: fetchFn as unknown as typeof fetch });
+    await expect(client.listProfiles()).rejects.toMatchObject({ name: "ApiError", status: 0 });
+  });
+
+  it("przerywa żądanie po przekroczeniu timeoutu (nie wisi w nieskończoność)", async () => {
+    vi.useFakeTimers();
+    try {
+      // Fetch, który nigdy sam nie odpowiada, ale reaguje na abort z AbortController.
+      const fetchFn = vi.fn((_url: string, init?: RequestInit) => {
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            const err = new Error("aborted");
+            err.name = "AbortError";
+            reject(err);
+          });
+        });
+      });
+      const client = new ApiClient({
+        baseUrl: "http://api",
+        timeoutMs: 5000,
+        fetchFn: fetchFn as unknown as typeof fetch,
+      });
+      // Podpinamy handler odrzucenia PRZED przesunięciem zegara, żeby abort nie wyglądał
+      // na "unhandled rejection" w momencie flush-a mikrozadań przez fake-timery.
+      const assertion = expect(client.listProfiles()).rejects.toMatchObject({
+        name: "ApiError",
+        status: 0,
+      });
+      await vi.advanceTimersByTimeAsync(5000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("diagnose woła /diag/search z origin i month", async () => {
     const body = {
       origin: "WAW",

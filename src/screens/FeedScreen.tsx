@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { OfferCard } from "../components/OfferCard";
@@ -17,6 +17,12 @@ type Props = NativeStackScreenProps<RootStackParamList, "Feed">;
 export function FeedScreen({ navigation }: Props): React.ReactElement {
   const { client, userId, signOut } = useSession();
   const { state, reload } = useAsync<OfferOut[]>(() => client.listOffers({ min_grade: "B" }), []);
+
+  // Sortujemy raz na zmianę danych, a nie przy każdym renderze (spinner push, nawigacja itp.).
+  const offers = useMemo(
+    () => (state.status === "ready" ? sortOffersByScore(state.data) : []),
+    [state],
+  );
 
   // Auto-rejestracja urządzenia do push (raz, po wejściu). Przypisujemy do zalogowanego
   // użytkownika (userId z sesji); gdy brak — fallback do domyślnego. Cicho pomija błędy.
@@ -73,12 +79,15 @@ export function FeedScreen({ navigation }: Props): React.ReactElement {
           <EmptyView message="Brak ofert w ocenie A/B. Dodaj profil i uruchom wyszukiwanie." />
         ) : (
           <FlatList
-            data={sortOffersByScore(state.data)}
+            data={offers}
             keyExtractor={(o, i) => `${o.dest}-${o.depart_date}-${i}`}
             renderItem={({ item }) => (
               <OfferCard offer={item} onPress={(offer) => navigation.navigate("OfferDetail", { offer })} />
             )}
             contentContainerStyle={styles.list}
+            initialNumToRender={8}
+            windowSize={7}
+            removeClippedSubviews
           />
         )
       ) : null}
