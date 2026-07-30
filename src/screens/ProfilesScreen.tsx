@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
-import { availableCities, cityLabel } from "../lib/cities";
+import { cityLabel, POLISH_CITIES } from "../lib/cities";
 import { upcomingMonths } from "../lib/format";
 import { useAsync } from "../lib/useAsync";
 import type { ProfileOut } from "../model/types";
@@ -28,13 +28,10 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
   const [busy, setBusy] = useState(false);
   const [searchingId, setSearchingId] = useState<string | null>(null);
 
-  // Blokada duplikatów: dodajemy tylko miasto, którego jeszcze nie ma na liście.
-  function addOrigin(code: string): void {
-    setOrigins((prev) => (prev.includes(code) ? prev : [...prev, code]));
-  }
-
-  function removeOrigin(code: string): void {
-    setOrigins((prev) => prev.filter((c) => c !== code));
+  // Przełącznik na stałej liście: dotknięcie dodaje lub usuwa miasto.
+  // Kolejność się nie zmienia (lista nie „skacze"), a duplikaty są niemożliwe.
+  function toggleOrigin(code: string): void {
+    setOrigins((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]));
   }
 
   async function create(): Promise<void> {
@@ -111,36 +108,25 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
   return (
     <View style={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.label}>Skąd (wybierz miasta)</Text>
-        {origins.length > 0 ? (
-          <View style={styles.chips}>
-            {origins.map((code) => (
-              <TouchableOpacity
-                key={code}
-                style={styles.chipSelected}
-                onPress={() => removeOrigin(code)}
-                accessibilityRole="button"
-                accessibilityLabel={`Usuń ${cityLabel(code)}`}
-              >
-                <Text style={styles.chipSelectedText}>{cityLabel(code)} ✕</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.hint}>Nie wybrano żadnego miasta.</Text>
-        )}
+        <Text style={styles.label}>Skąd (dotknij, aby zaznaczyć)</Text>
         <View style={styles.chips}>
-          {availableCities(origins).map((city) => (
-            <TouchableOpacity
-              key={city.code}
-              style={styles.chip}
-              onPress={() => addOrigin(city.code)}
-              accessibilityRole="button"
-              accessibilityLabel={`Dodaj ${city.name}`}
-            >
-              <Text style={styles.chipText}>{city.name}</Text>
-            </TouchableOpacity>
-          ))}
+          {POLISH_CITIES.map((city) => {
+            const selected = origins.includes(city.code);
+            return (
+              <TouchableOpacity
+                key={city.code}
+                style={selected ? styles.chipSelected : styles.chip}
+                onPress={() => toggleOrigin(city.code)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`${city.name}${selected ? " (zaznaczone)" : ""}`}
+              >
+                <Text style={selected ? styles.chipSelectedText : styles.chipText}>
+                  {selected ? `✓ ${city.name}` : city.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
         <Text style={styles.label}>Zakres</Text>
         <TextInput style={styles.input} value={scope} onChangeText={setScope} autoCapitalize="none" />
@@ -212,7 +198,6 @@ const styles = StyleSheet.create({
   form: { padding: 16, gap: 6, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e5e7eb" },
   label: { fontSize: 13, color: "#334155" },
   input: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 8, padding: 10, fontSize: 15 },
-  hint: { fontSize: 13, color: "#94a3b8", fontStyle: "italic" },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
     borderWidth: 1,
