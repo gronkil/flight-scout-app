@@ -80,6 +80,40 @@ const pl = {
       "Ceny przelicza serwer po swoim kursie — aplikacja niczego nie przelicza samodzielnie. Wybór waluty wysyłamy do API i pokazujemy to, co wróci.",
     languageNote: "Język interfejsu. Domyślnie z ustawień urządzenia.",
   },
+  common: {
+    fail: "Nie udało się",
+    cancel: "Anuluj",
+    delete: "Usuń",
+  },
+  profiles: {
+    from: "Skąd (dotknij, aby zaznaczyć)",
+    scope: "Zakres",
+    add: "Dodaj profil",
+    selected: "zaznaczone",
+    empty: "Brak profili — dodaj pierwszy powyżej.",
+    searchNow: "Szukaj teraz",
+    searching: "Szukam…",
+    alertsLink: "Alerty",
+    minGrade: "min. ocena",
+    pickCityTitle: "Wybierz miasto",
+    pickCityBody: "Zaznacz co najmniej jedno miasto wylotu.",
+    deleteTitle: "Usunąć profil?",
+    deleteFailTitle: "Nie udało się usunąć",
+    searchedTitle: "Wyszukano",
+    searchErrTitle: "Błąd wyszukiwania",
+    noneFound: "Brak ofert A/B w najbliższych miesiącach dla tego profilu.",
+  },
+  alerts: {
+    notifyWhen: "Powiadom, gdy cena ≤",
+    add: "Dodaj",
+    addTopDeal: "+ Alert: nowa okazja z oceną A",
+    empty: "Brak alertów. Dodaj pierwszy powyżej.",
+    badPriceTitle: "Zła cena",
+    badPriceBody: "Podaj dodatnią kwotę progu.",
+    deleteAlert: "Usuń alert",
+    typePriceBelow: "Cena poniżej progu",
+    typeTopDeal: "Nowa top okazja",
+  },
   cal: {
     weekdays: ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
     months: [
@@ -159,6 +193,40 @@ const en: typeof pl = {
       "Prices are converted by the server at its own rate — the app never converts on its own. We send your currency choice to the API and show whatever comes back.",
     languageNote: "Interface language. Defaults to your device settings.",
   },
+  common: {
+    fail: "Something went wrong",
+    cancel: "Cancel",
+    delete: "Delete",
+  },
+  profiles: {
+    from: "From (tap to select)",
+    scope: "Scope",
+    add: "Add profile",
+    selected: "selected",
+    empty: "No profiles — add your first above.",
+    searchNow: "Search now",
+    searching: "Searching…",
+    alertsLink: "Alerts",
+    minGrade: "min. grade",
+    pickCityTitle: "Choose a city",
+    pickCityBody: "Select at least one departure city.",
+    deleteTitle: "Delete profile?",
+    deleteFailTitle: "Couldn't delete",
+    searchedTitle: "Search done",
+    searchErrTitle: "Search error",
+    noneFound: "No A/B offers in the coming months for this profile.",
+  },
+  alerts: {
+    notifyWhen: "Notify when price ≤",
+    add: "Add",
+    addTopDeal: "+ Alert: new deal graded A",
+    empty: "No alerts. Add your first above.",
+    badPriceTitle: "Invalid price",
+    badPriceBody: "Enter a positive threshold amount.",
+    deleteAlert: "Delete alert",
+    typePriceBelow: "Price below threshold",
+    typeTopDeal: "New top deal",
+  },
   cal: {
     weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     months: [
@@ -193,4 +261,33 @@ export function changesLabel(changes: number | null, lang: Lang): string {
   if (changes === 0) return messages[lang].offer.direct;
   if (changes === null) return "";
   return lang === "pl" ? `${changes} przes.` : `${changes} stop${changes === 1 ? "" : "s"}`;
+}
+
+// Treść potwierdzenia usunięcia profilu.
+export function deleteProfileBody(name: string, lang: Lang): string {
+  return lang === "pl"
+    ? `${name} — profil i jego alerty zostaną usunięte.`
+    : `${name} — the profile and its alerts will be deleted.`;
+}
+
+// Wynik wyszukiwania (liczba znalezionych ofert A/B).
+export function searchFoundBody(total: number, lang: Lang): string {
+  return lang === "pl"
+    ? `Znaleziono ${total} ofert A/B (najbliższe miesiące). Zobacz w feedzie.`
+    : `Found ${total} A/B offers (coming months). See them in the feed.`;
+}
+
+// Meta alertu: "kanał push · max 3/dzień".
+export function alertMeta(channel: string, maxPerDay: number, lang: Lang): string {
+  return lang === "pl"
+    ? `kanał ${channel} · max ${maxPerDay}/dzień`
+    : `channel ${channel} · max ${maxPerDay}/day`;
+}
+
+// Czytelna nazwa typu alertu (fallback: surowy typ z API).
+export function alertTypeLabel(type: string, lang: Lang): string {
+  const m = messages[lang].alerts;
+  if (type === "PRICE_BELOW") return m.typePriceBelow;
+  if (type === "NEW_TOP_DEAL") return m.typeTopDeal;
+  return type;
 }

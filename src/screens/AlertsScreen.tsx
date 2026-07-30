@@ -11,6 +11,8 @@ import {
 } from "react-native";
 
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
+import { useI18n } from "../i18n";
+import { alertMeta, alertTypeLabel } from "../i18n/messages";
 import { useAsync } from "../lib/useAsync";
 import type { AlertOut } from "../model/types";
 import type { RootStackParamList } from "../navigation";
@@ -21,20 +23,21 @@ type Props = NativeStackScreenProps<RootStackParamList, "Alerts">;
 export function AlertsScreen({ route }: Props): React.ReactElement {
   const { profileId } = route.params;
   const { client } = useSession();
+  const { t, lang } = useI18n();
   const { state, reload } = useAsync<AlertOut[]>(() => client.listAlerts(profileId), [profileId]);
   const [price, setPrice] = useState("500");
 
   async function addPriceBelow(): Promise<void> {
     const value = Number(price);
     if (!Number.isFinite(value) || value <= 0) {
-      RNAlert.alert("Zła cena", "Podaj dodatnią kwotę progu.");
+      RNAlert.alert(t.alerts.badPriceTitle, t.alerts.badPriceBody);
       return;
     }
     try {
       await client.createAlert(profileId, { type: "PRICE_BELOW", price: value, channel: "push" });
       reload();
     } catch (e) {
-      RNAlert.alert("Nie udało się", e instanceof Error ? e.message : String(e));
+      RNAlert.alert(t.common.fail, e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -43,7 +46,7 @@ export function AlertsScreen({ route }: Props): React.ReactElement {
       await client.createAlert(profileId, { type: "NEW_TOP_DEAL", min_grade: "A", channel: "push" });
       reload();
     } catch (e) {
-      RNAlert.alert("Nie udało się", e instanceof Error ? e.message : String(e));
+      RNAlert.alert(t.common.fail, e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -52,22 +55,22 @@ export function AlertsScreen({ route }: Props): React.ReactElement {
       await client.deleteAlert(id);
       reload();
     } catch (e) {
-      RNAlert.alert("Nie udało się", e instanceof Error ? e.message : String(e));
+      RNAlert.alert(t.common.fail, e instanceof Error ? e.message : String(e));
     }
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.label}>Powiadom, gdy cena ≤</Text>
+        <Text style={styles.label}>{t.alerts.notifyWhen}</Text>
         <View style={styles.rowForm}>
           <TextInput style={styles.input} value={price} onChangeText={setPrice} keyboardType="numeric" />
           <TouchableOpacity style={styles.button} onPress={addPriceBelow} accessibilityRole="button">
-            <Text style={styles.buttonText}>Dodaj</Text>
+            <Text style={styles.buttonText}>{t.alerts.add}</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.ghost} onPress={addTopDeal} accessibilityRole="button">
-          <Text style={styles.ghostText}>+ Alert: nowa okazja z oceną A</Text>
+          <Text style={styles.ghostText}>{t.alerts.addTopDeal}</Text>
         </TouchableOpacity>
       </View>
 
@@ -75,7 +78,7 @@ export function AlertsScreen({ route }: Props): React.ReactElement {
       {state.status === "error" ? <ErrorView message={state.error} onRetry={reload} /> : null}
       {state.status === "ready" ? (
         state.data.length === 0 ? (
-          <EmptyView message="Brak alertów. Dodaj pierwszy powyżej." />
+          <EmptyView message={t.alerts.empty} />
         ) : (
           <FlatList
             data={state.data}
@@ -84,13 +87,11 @@ export function AlertsScreen({ route }: Props): React.ReactElement {
             renderItem={({ item }) => (
               <View style={styles.card}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{item.type}</Text>
-                  <Text style={styles.cardMeta}>
-                    kanał {item.channel} · max {item.max_per_day}/dzień
-                  </Text>
+                  <Text style={styles.cardTitle}>{alertTypeLabel(item.type, lang)}</Text>
+                  <Text style={styles.cardMeta}>{alertMeta(item.channel, item.max_per_day, lang)}</Text>
                 </View>
-                <TouchableOpacity onPress={() => remove(item.id)} accessibilityRole="button" accessibilityLabel="Usuń alert">
-                  <Text style={styles.delete}>Usuń</Text>
+                <TouchableOpacity onPress={() => remove(item.id)} accessibilityRole="button" accessibilityLabel={t.alerts.deleteAlert}>
+                  <Text style={styles.delete}>{t.common.delete}</Text>
                 </TouchableOpacity>
               </View>
             )}

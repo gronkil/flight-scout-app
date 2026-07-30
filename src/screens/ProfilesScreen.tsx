@@ -11,6 +11,8 @@ import {
 } from "react-native";
 
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
+import { useI18n } from "../i18n";
+import { deleteProfileBody, searchFoundBody } from "../i18n/messages";
 import { cityLabel, POLISH_CITIES } from "../lib/cities";
 import { upcomingMonths } from "../lib/format";
 import { useAsync } from "../lib/useAsync";
@@ -22,6 +24,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Profiles">;
 
 export function ProfilesScreen({ navigation }: Props): React.ReactElement {
   const { client } = useSession();
+  const { t, lang, trip } = useI18n();
   const { state, reload } = useAsync<ProfileOut[]>(() => client.listProfiles(), []);
   const [origins, setOrigins] = useState<string[]>(["WAW"]);
   const [scope, setScope] = useState("europa");
@@ -36,7 +39,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
 
   async function create(): Promise<void> {
     if (origins.length === 0) {
-      RNAlert.alert("Wybierz miasto", "Zaznacz co najmniej jedno miasto wylotu.");
+      RNAlert.alert(t.profiles.pickCityTitle, t.profiles.pickCityBody);
       return;
     }
     setBusy(true);
@@ -49,17 +52,17 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
       setOrigins(["WAW"]);
       reload();
     } catch (e) {
-      RNAlert.alert("Nie udało się", e instanceof Error ? e.message : String(e));
+      RNAlert.alert(t.common.fail, e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
   }
 
   async function remove(id: string, name: string): Promise<void> {
-    RNAlert.alert("Usunąć profil?", `${name} — profil i jego alerty zostaną usunięte.`, [
-      { text: "Anuluj", style: "cancel" },
+    RNAlert.alert(t.profiles.deleteTitle, deleteProfileBody(name, lang), [
+      { text: t.common.cancel, style: "cancel" },
       {
-        text: "Usuń",
+        text: t.common.delete,
         style: "destructive",
         onPress: () => {
           void (async () => {
@@ -67,7 +70,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
               await client.deleteProfile(id);
               reload();
             } catch (e) {
-              RNAlert.alert("Nie udało się usunąć", e instanceof Error ? e.message : String(e));
+              RNAlert.alert(t.profiles.deleteFailTitle, e instanceof Error ? e.message : String(e));
             }
           })();
         },
@@ -94,11 +97,11 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
       const total = results.reduce((sum, r) => (r.ok ? sum + r.count : sum), 0);
       const errors = results.flatMap((r) => (r.ok ? [] : [r.error]));
       if (total > 0) {
-        RNAlert.alert("Wyszukano", `Znaleziono ${total} ofert A/B (najbliższe miesiące). Zobacz w feedzie.`);
+        RNAlert.alert(t.profiles.searchedTitle, searchFoundBody(total, lang));
       } else if (errors.length === months.length) {
-        RNAlert.alert("Błąd wyszukiwania", errors[0]);
+        RNAlert.alert(t.profiles.searchErrTitle, errors[0]);
       } else {
-        RNAlert.alert("Wyszukano", "Brak ofert A/B w najbliższych miesiącach dla tego profilu.");
+        RNAlert.alert(t.profiles.searchedTitle, t.profiles.noneFound);
       }
     } finally {
       setSearchingId(null);
@@ -108,7 +111,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
   return (
     <View style={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.label}>Skąd (dotknij, aby zaznaczyć)</Text>
+        <Text style={styles.label}>{t.profiles.from}</Text>
         <View style={styles.chips}>
           {POLISH_CITIES.map((city) => {
             const selected = origins.includes(city.code);
@@ -119,7 +122,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
                 onPress={() => toggleOrigin(city.code)}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
-                accessibilityLabel={`${city.name}${selected ? " (zaznaczone)" : ""}`}
+                accessibilityLabel={`${city.name}${selected ? ` (${t.profiles.selected})` : ""}`}
               >
                 <Text style={selected ? styles.chipSelectedText : styles.chipText}>
                   {selected ? `✓ ${city.name}` : city.name}
@@ -128,7 +131,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
             );
           })}
         </View>
-        <Text style={styles.label}>Zakres</Text>
+        <Text style={styles.label}>{t.profiles.scope}</Text>
         <TextInput style={styles.input} value={scope} onChangeText={setScope} autoCapitalize="none" />
         <TouchableOpacity
           style={[styles.button, busy && styles.disabled]}
@@ -136,7 +139,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
           disabled={busy}
           accessibilityRole="button"
         >
-          <Text style={styles.buttonText}>Dodaj profil</Text>
+          <Text style={styles.buttonText}>{t.profiles.add}</Text>
         </TouchableOpacity>
       </View>
 
@@ -144,7 +147,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
       {state.status === "error" ? <ErrorView message={state.error} onRetry={reload} /> : null}
       {state.status === "ready" ? (
         state.data.length === 0 ? (
-          <EmptyView message="Brak profili — dodaj pierwszy powyżej." />
+          <EmptyView message={t.profiles.empty} />
         ) : (
           <FlatList
             data={state.data}
@@ -155,7 +158,9 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
                 <Text style={styles.cardTitle}>
                   {item.origins.map(cityLabel).join(", ")} · {item.scope}
                 </Text>
-                <Text style={styles.cardMeta}>min. ocena {item.min_grade} · {item.trip_type}</Text>
+                <Text style={styles.cardMeta}>
+                  {t.profiles.minGrade} {item.min_grade} · {trip(item.trip_type)}
+                </Text>
                 <View style={styles.actions}>
                   <TouchableOpacity
                     onPress={() => search(item.id)}
@@ -163,7 +168,7 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
                     accessibilityRole="button"
                   >
                     <Text style={[styles.action, searchingId !== null && styles.actionMuted]}>
-                      {searchingId === item.id ? "Szukam…" : "Szukaj teraz"}
+                      {searchingId === item.id ? t.profiles.searching : t.profiles.searchNow}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -175,13 +180,13 @@ export function ProfilesScreen({ navigation }: Props): React.ReactElement {
                     }
                     accessibilityRole="button"
                   >
-                    <Text style={styles.action}>Alerty</Text>
+                    <Text style={styles.action}>{t.profiles.alertsLink}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => remove(item.id, `${item.origins.map(cityLabel).join(", ")} · ${item.scope}`)}
                     accessibilityRole="button"
                   >
-                    <Text style={styles.actionDanger}>Usuń</Text>
+                    <Text style={styles.actionDanger}>{t.common.delete}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
