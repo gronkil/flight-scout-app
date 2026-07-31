@@ -46,6 +46,7 @@ const pl = {
     waking: "⏳ Budzę serwer, chwilkę…",
     empty: "Brak ofert w ocenie A/B. Dodaj profil i uruchom wyszukiwanie.",
     settings: "Ustawienia",
+    calendar: "Kalendarz",
   },
   offer: {
     back: "Wróć",
@@ -115,6 +116,16 @@ const pl = {
     typePriceBelow: "Cena poniżej progu",
     typeTopDeal: "Nowa top okazja",
   },
+  depart: {
+    title: "Kiedy chcesz lecieć?",
+    back: "Wróć",
+    subtitle: "Wybierz dzień na kalendarzu, a pokażemy tanie loty z wylotem tego dnia.",
+    hint: "Cena = najtańszy lot danego dnia. Kliknij dzień, by zobaczyć wszystkie oferty. Najtańszy dzień podświetlony.",
+    empty: "Brak lotów w kalendarzu. Wróć do feedu lub dodaj profil i uruchom wyszukiwanie.",
+    pickPrompt: "Dotknij podświetlony dzień, aby zobaczyć tanie loty.",
+    noneForDay: "Brak lotów z wylotem tego dnia.",
+    dayHeader: "Loty z wylotem",
+  },
   cal: {
     weekdays: ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
     months: [
@@ -160,6 +171,7 @@ const en: typeof pl = {
     waking: "⏳ Waking the server, one moment…",
     empty: "No offers graded A/B. Add a profile and run a search.",
     settings: "Settings",
+    calendar: "Calendar",
   },
   offer: {
     back: "Back",
@@ -228,6 +240,16 @@ const en: typeof pl = {
     deleteAlert: "Delete alert",
     typePriceBelow: "Price below threshold",
     typeTopDeal: "New top deal",
+  },
+  depart: {
+    title: "When do you want to fly?",
+    back: "Back",
+    subtitle: "Pick a day on the calendar and we'll show cheap flights departing that day.",
+    hint: "Price = cheapest flight that day. Tap a day to see all offers. The cheapest day is highlighted.",
+    empty: "No flights in the calendar. Go back to the feed or add a profile and run a search.",
+    pickPrompt: "Tap a highlighted day to see cheap flights.",
+    noneForDay: "No flights departing that day.",
+    dayHeader: "Flights departing",
   },
   cal: {
     weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],

@@ -69,6 +69,13 @@ export function FeedScreen({ navigation }: Props): React.ReactElement {
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
+            onPress={() => navigation.navigate("Calendar")}
+            accessibilityRole="button"
+            accessibilityLabel={t.feed.calendar}
+          >
+            <Text style={styles.link}>{t.feed.calendar}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={() => navigation.navigate("Profiles")}
             accessibilityRole="button"
             accessibilityLabel={t.feed.profiles}

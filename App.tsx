@@ -6,6 +6,7 @@ import React from "react";
 import { I18nProvider, useI18n } from "./src/i18n";
 import type { RootStackParamList } from "./src/navigation";
 import { AlertsScreen } from "./src/screens/AlertsScreen";
+import { CalendarScreen } from "./src/screens/CalendarScreen";
 import { DeveloperScreen } from "./src/screens/DeveloperScreen";
 import { FeedScreen } from "./src/screens/FeedScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
@@ -31,6 +32,7 @@ function Navigation(): React.ReactElement {
       >
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Feed" component={FeedScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Calendar" component={CalendarScreen} options={{ headerShown: false }} />
         <Stack.Screen
           name="OfferDetail"
           component={OfferDetailScreen}
