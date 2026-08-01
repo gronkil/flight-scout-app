@@ -8,7 +8,7 @@ import { EmptyView, ErrorView, Loading } from "../components/StateViews";
 import { useI18n } from "../i18n";
 import { buildDepartCalendar, offersForDate, type DepartCell } from "../lib/departCalendar";
 import { useAsync } from "../lib/useAsync";
-import type { OfferOut } from "../model/types";
+import type { DepartCalendarOut } from "../model/types";
 import type { RootStackParamList } from "../navigation";
 import { colors } from "../theme";
 import { useSession } from "../state/session";
@@ -31,23 +31,23 @@ export function CalendarScreen({ navigation }: Props): React.ReactElement {
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<string | null>(null);
 
-  // Loty do kalendarza: bez filtra oceny, żeby pokryć jak najwięcej dni. Dwustopniowo
-  // (szybka próba + cierpliwa) — tak jak feed budzi uśpiony backend.
-  const { state, reload } = useAsync<OfferOut[]>(
-    (attempt) => client.listOffers({ currency }, attempt === 0 ? 2000 : 45000),
+  // Kalendarz wylotów z API: te same oferty co feed, pogrupowane po dacie wylotu.
+  // Dwustopniowo (szybka próba + cierpliwa) — tak jak feed budzi uśpiony backend.
+  const { state, reload } = useAsync<DepartCalendarOut>(
+    (attempt) => client.departCalendar({ currency }, attempt === 0 ? 2000 : 45000),
     [client, currency],
     { maxAttempts: 2, retryDelayMs: 200 },
   );
 
-  const offers = state.status === "ready" ? state.data : [];
+  const days = state.status === "ready" ? state.data.days : [];
   const today = todayISO();
   const months = useMemo(
-    () => buildDepartCalendar(offers, today, [...t.cal.months]),
-    [offers, today, t.cal.months],
+    () => buildDepartCalendar(days, today, [...t.cal.months]),
+    [days, today, t.cal.months],
   );
   const dayOffers = useMemo(
-    () => (selected ? offersForDate(offers, selected) : []),
-    [offers, selected],
+    () => (selected ? offersForDate(days, selected) : []),
+    [days, selected],
   );
 
   return (

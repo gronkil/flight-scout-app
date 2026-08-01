@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { buildDepartCalendar, offersForDate, type DepartCell } from "../src/lib/departCalendar";
-import type { OfferOut } from "../src/model/types";
+import type { DepartDayOut, OfferOut } from "../src/model/types";
 
-function offer(dest: string, depart: string | null, price: number): OfferOut {
+function offer(dest: string, depart: string, price: number): OfferOut {
   return {
     city: dest,
     dest,
@@ -22,6 +22,10 @@ function offer(dest: string, depart: string | null, price: number): OfferOut {
   };
 }
 
+function day(depart: string, cheapest: number, offers: OfferOut[]): DepartDayOut {
+  return { depart_date: depart, cheapest, currency: "PLN", count: offers.length, offers };
+}
+
 function cellOf(months: ReturnType<typeof buildDepartCalendar>, date: string): DepartCell | undefined {
   for (const m of months) {
     for (const w of m.weeks) {
@@ -32,14 +36,12 @@ function cellOf(months: ReturnType<typeof buildDepartCalendar>, date: string): D
 }
 
 describe("buildDepartCalendar", () => {
-  const offers = [
-    offer("BCN", "2026-09-12", 320),
-    offer("BCN", "2026-09-12", 280), // tańszy tego samego dnia
-    offer("ROM", "2026-09-22", 410),
-    offer("LIS", "2026-10-02", 210),
-    offer("XXX", null, 99), // oferta bez daty wylotu — pomijana
+  const days: DepartDayOut[] = [
+    day("2026-09-12", 280, [offer("BCN", "2026-09-12", 280), offer("ROM", "2026-09-12", 320)]),
+    day("2026-09-22", 410, [offer("LON", "2026-09-22", 410)]),
+    day("2026-10-02", 210, [offer("LIS", "2026-10-02", 210)]),
   ];
-  const months = buildDepartCalendar(offers, "2026-09-10");
+  const months = buildDepartCalendar(days, "2026-09-10");
 
   it("tworzy po miesiącu na każdy miesiąc z lotami", () => {
     expect(months.map((m) => m.label)).toEqual(["Wrzesień 2026", "Październik 2026"]);
@@ -49,9 +51,9 @@ describe("buildDepartCalendar", () => {
     for (const m of months) for (const w of m.weeks) expect(w).toHaveLength(7);
   });
 
-  it("dzień pokazuje najtańszą ofertę i liczbę ofert", () => {
+  it("dzień pokazuje najtańszą cenę i liczbę ofert", () => {
     const c = cellOf(months, "2026-09-12");
-    expect(c?.price).toBe(280); // najtańsza z dwóch tego dnia
+    expect(c?.price).toBe(280);
     expect(c?.count).toBe(2);
     expect(c?.past).toBe(false);
   });
@@ -74,30 +76,23 @@ describe("buildDepartCalendar", () => {
     expect(gap?.count).toBe(0);
   });
 
-  it("pomija oferty bez daty wylotu (nie tworzy z nich miesięcy)", () => {
-    // Gdyby oferta bez daty trafiła do kalendarza, byłby dodatkowy/pusty miesiąc.
-    expect(months).toHaveLength(2);
-  });
-
   it("pusta lista → brak miesięcy", () => {
     expect(buildDepartCalendar([], "2026-09-10")).toEqual([]);
   });
 });
 
 describe("offersForDate", () => {
-  const offers = [
-    offer("BCN", "2026-09-12", 320),
-    offer("ROM", "2026-09-12", 180),
-    offer("LIS", "2026-09-13", 210),
+  const days: DepartDayOut[] = [
+    day("2026-09-12", 180, [offer("ROM", "2026-09-12", 180), offer("BCN", "2026-09-12", 320)]),
+    day("2026-09-13", 210, [offer("LIS", "2026-09-13", 210)]),
   ];
 
-  it("zwraca oferty danego dnia posortowane od najtańszej", () => {
-    const list = offersForDate(offers, "2026-09-12");
-    expect(list.map((o) => o.price)).toEqual([180, 320]);
+  it("zwraca oferty danego dnia (w kolejności z API)", () => {
+    const list = offersForDate(days, "2026-09-12");
     expect(list.map((o) => o.dest)).toEqual(["ROM", "BCN"]);
   });
 
   it("dzień bez ofert → pusta lista", () => {
-    expect(offersForDate(offers, "2026-09-20")).toEqual([]);
+    expect(offersForDate(days, "2026-09-20")).toEqual([]);
   });
 });

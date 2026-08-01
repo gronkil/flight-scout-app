@@ -5,6 +5,7 @@ import type {
   AlertIn,
   AlertOut,
   AuthOut,
+  DepartCalendarOut,
   MeOut,
   OfferOut,
   Platform,
@@ -169,6 +170,17 @@ export class ApiClient {
   // od ręki) i osobnej, cierpliwej próby wybudzenia (Render usypia usługę przy bezczynności).
   listOffers(filters: OfferFilters = {}, timeoutMs?: number): Promise<OfferOut[]> {
     return this.request("GET", `/offers${this.query({ ...filters })}`, undefined, timeoutMs);
+  }
+
+  // Kalendarz wylotów: te same oferty co feed, pogrupowane po dacie wylotu („kiedy chcę
+  // lecieć → tanie loty tego dnia"). Zasila ekran wyboru dnia.
+  departCalendar(filters: OfferFilters = {}, timeoutMs?: number): Promise<DepartCalendarOut> {
+    return this.request(
+      "GET",
+      `/offers/calendar${this.query({ ...filters })}`,
+      undefined,
+      timeoutMs,
+    );
   }
 
   // Kalendarz powrotów DEST→origin dla wybranego lotu tam („kiedy można wrócić").

@@ -90,6 +90,19 @@ export interface OfferOut {
   flex: FlexOut | null;
 }
 
+// Kalendarz wylotów — lustro GET /offers/calendar (backend/adapters/inbound/api/schemas.py).
+export interface DepartDayOut {
+  depart_date: string;
+  cheapest: number; // najtańsza cena lotu z wylotem tego dnia
+  currency: string;
+  count: number; // ile lotów ma wylot tego dnia
+  offers: OfferOut[]; // loty tego dnia, posortowane po score (najlepsze pierwsze)
+}
+
+export interface DepartCalendarOut {
+  days: DepartDayOut[];
+}
+
 export interface AlertIn {
   type: AlertType;
   price?: number | null;
