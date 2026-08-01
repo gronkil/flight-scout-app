@@ -1,0 +1,87 @@
+name: Deploy web (GitHub Pages)
+
+# Publikuje wersje webowa aplikacji (Expo Web / react-native-web) na GitHub Pages,
+# zeby uzytkownicy iPhone mogli korzystac z apki przez przegladarke — bez App Store
+# i bez konta Apple Developer. Ta sama apka (logowanie, feed, profile), responsywnie.
+#
+# NIEZALEZNE od pipeline'u APK: nie awansuje main, nie buduje APK, nie dotyka releasow.
+# Wyzwalane po ZIELONYM CI na galezi 'dev' (ten sam commit, ktory awansuje main + APK)
+# albo recznie (workflow_dispatch).
+#
+# WYMAGANIE JEDNORAZOWE: w ustawieniach repo wlacz Pages ze zrodlem "GitHub Actions"
+# (Settings -> Pages -> Build and deployment -> Source: GitHub Actions). Bez tego krok
+# deployu zakonczy sie bledem, ale reszta pipeline'u (CI, main, APK) dziala normalnie.
+on:
+  workflow_run:
+    workflows: ["CI (Expo/RN)"]
+    types: [completed]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Jeden deploy Pages naraz; nowszy w kolejce anuluje poprzedni.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    # Tylko: reczne uruchomienie ALBO CI zielone na galezi 'dev'.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.head_branch == 'dev') }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Ten sam zielony commit co CI (przy dispatchu: galaz uruchomienia).
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalacja zaleznosci
+        run: npm ci
+
+      - name: Ustaw baseUrl na sciezke GitHub Pages (/<repo>)
+        # Strony projektowe Pages serwuja sie pod /<repo>/, wiec Expo musi budowac
+        # sciezki assetow z tym prefiksem. Ustawiamy to TYLKO na czas builda web —
+        # commitowany app.json zostaje czysty, wiec build APK jest nietkniety.
+        run: |
+          node -e "
+            const fs=require('fs');
+            const p='app.json';
+            const j=JSON.parse(fs.readFileSync(p,'utf8'));
+            j.expo.experiments = j.expo.experiments || {};
+            j.expo.experiments.baseUrl = '/${{ github.event.repository.name }}';
+            fs.writeFileSync(p, JSON.stringify(j,null,2));
+            console.log('baseUrl =', j.expo.experiments.baseUrl);
+          "
+
+      - name: Zbuduj strone (expo export, web)
+        run: npx expo export --platform web --output-dir dist-web
+
+      - name: SPA fallback (404 -> index dla odswiezenia podstron)
+        run: cp dist-web/index.html dist-web/404.html
+
+      - name: Konfiguracja Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artefaktu Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-web
+
+      - name: Deploy na GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

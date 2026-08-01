@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GradeBadge } from "../components/GradeBadge";
 import { EmptyView, ErrorView, Loading } from "../components/StateViews";
 import { useI18n } from "../i18n";
+import { cityLabel } from "../lib/cities";
 import { offerDates } from "../lib/format";
 import { buildReturnCalendar, type CalCell } from "../lib/returnCalendar";
 import { useAsync } from "../lib/useAsync";
@@ -47,7 +48,7 @@ export function OfferDetailScreen({ route, navigation }: Props): React.ReactElem
           accessibilityLabel={t.offer.back}
         >
           <Text style={styles.back}>
-            ‹ {t.offer.back} · {offer.origin} → {offer.dest}
+            ‹ {t.offer.back} · {cityLabel(offer.origin)} → {offer.city}
           </Text>
         </TouchableOpacity>
         <Text style={styles.heroCity}>{offer.city}</Text>
