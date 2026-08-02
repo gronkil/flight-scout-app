@@ -66,11 +66,12 @@ jobs:
         run: cp dist-web/index.html dist-web/404.html
 
       - name: Konfiguracja Pages
-        # enablement: true — wlacza Pages w repo automatycznie (tokenem workflowa),
-        # jesli jeszcze nie wlaczone. Dzieki temu nie trzeba klikac w Settings.
+        # UWAGA: jesli ten krok wywala sie z "Resource not accessible by integration",
+        # to znak, ze GitHub Pages NIE jest jeszcze wlaczone w repo. Wlacz je RECZNIE:
+        # Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+        # To jednorazowa czynnosc dostepna tylko dla wlasciciela repo — token workflowa
+        # nie ma prawa jej wykonac. Po wlaczeniu kolejny deploy przejdzie na zielono.
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Upload artefaktu Pages
         uses: actions/upload-pages-artifact@v3
