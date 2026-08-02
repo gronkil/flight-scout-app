@@ -5,16 +5,15 @@ name: Deploy web (GitHub Pages)
 # i bez konta Apple Developer. Ta sama apka (logowanie, feed, profile), responsywnie.
 #
 # NIEZALEZNE od pipeline'u APK: nie awansuje main, nie buduje APK, nie dotyka releasow.
-# Wyzwalane po ZIELONYM CI na galezi 'dev' (ten sam commit, ktory awansuje main + APK)
-# albo recznie (workflow_dispatch).
+# Wyzwalane przy KAZDYM pushu na 'dev' (rownolegle do CI) albo recznie (workflow_dispatch).
+# Push-trigger celowo: workflow uruchamia sie z pliku z galezi 'dev', wiec konfiguracja
+# (w tym auto-wlaczenie Pages) dziala od razu, bez zaleznosci od gałęzi domyslnej.
 #
-# WYMAGANIE JEDNORAZOWE: w ustawieniach repo wlacz Pages ze zrodlem "GitHub Actions"
-# (Settings -> Pages -> Build and deployment -> Source: GitHub Actions). Bez tego krok
-# deployu zakonczy sie bledem, ale reszta pipeline'u (CI, main, APK) dziala normalnie.
+# Pages wlaczane automatycznie przez krok "Konfiguracja Pages" (enablement: true) —
+# nie trzeba nic klikac w Settings.
 on:
-  workflow_run:
-    workflows: ["CI (Expo/RN)"]
-    types: [completed]
+  push:
+    branches: [dev]
   workflow_dispatch: {}
 
 permissions:
@@ -29,20 +28,12 @@ concurrency:
 
 jobs:
   deploy:
-    # Tylko: reczne uruchomienie ALBO CI zielone na galezi 'dev'.
-    if: >-
-      ${{ github.event_name == 'workflow_dispatch' ||
-          (github.event.workflow_run.conclusion == 'success' &&
-           github.event.workflow_run.head_branch == 'dev') }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Ten sam zielony commit co CI (przy dispatchu: galaz uruchomienia).
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
