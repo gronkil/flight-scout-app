@@ -37,6 +37,20 @@ Domyślny adres API: `http://localhost:8000` (edytowalny na ekranie logowania). 
 - Zero sekretów w kliencie; komunikacja tylko z naszym API.
 - Stany ładowania/błędu/pustki i podstawy dostępności (etykiety, role) w komponentach.
 
+## Wersja webowa (dla iPhone, bez App Store)
+Ta sama aplikacja działa w przeglądarce (Expo Web / `react-native-web`), więc użytkownicy
+iPhone mogą z niej korzystać bez instalacji i bez konta Apple Developer.
+
+```bash
+npm run web          # dev w przeglądarce
+npm run build:web    # statyczny eksport (dist-web/)
+```
+
+Publikacja automatyczna: każdy push na `dev` uruchamia workflow `web.yml`, który buduje
+i wdraża stronę na **GitHub Pages** → `https://gronkil.github.io/flight-scout-app/`
+(niezależnie od pipeline'u APK). Wymaga jednorazowo: repo publiczne + Pages ze źródłem
+„GitHub Actions".
+
 ## Push
 Aplikacja **sama rejestruje** urządzenie do powiadomień przy pierwszym wejściu do feedu
 (`expo-notifications`, po zgodzie). Token trafia do backendu przez `POST /devices` dla
