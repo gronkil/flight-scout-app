@@ -75,7 +75,11 @@ jobs:
         run: cp dist-web/index.html dist-web/404.html
 
       - name: Konfiguracja Pages
+        # enablement: true — wlacza Pages w repo automatycznie (tokenem workflowa),
+        # jesli jeszcze nie wlaczone. Dzieki temu nie trzeba klikac w Settings.
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload artefaktu Pages
         uses: actions/upload-pages-artifact@v3
