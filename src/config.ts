@@ -1,7 +1,13 @@
 // Konfiguracja klienta. Bez sekretów w kodzie — baseUrl konfigurowalny, token z logowania.
 import Constants from "expo-constants";
 
-export const DEFAULT_API_BASE_URL = "http://localhost:8000";
+// Adres API używany, gdy konfiguracja z app.json (extra.apiBaseUrl) nie jest dostępna.
+// WAŻNE (web): w statycznym eksporcie web `Constants.expoConfig` bywa pusty i wtedy apka
+// wpada w ten fallback. Dlatego musi to być PRODUKCYJNY backend, a nie `localhost` —
+// inaczej wersja webowa (GitHub Pages) próbuje dzwonić pod localhost telefonu i dostaje
+// „Brak połączenia z serwerem". Lokalny dev z backendem na localhost ustawia adres ręcznie
+// (ekran logowania → „Zaawansowane") albo przez app.json extra.apiBaseUrl.
+export const DEFAULT_API_BASE_URL = "https://flight-scout-api.onrender.com";
 
 // Domyślny użytkownik (backend jednoosobowy w M4/M5) — MUSI zgadzać się z workerem
 // (config.settings.DEFAULT_USER_ID, domyślnie "owner"), żeby push trafił do właściwych urządzeń.
