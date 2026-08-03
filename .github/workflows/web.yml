@@ -42,8 +42,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Zbuduj DOKLADNIE ten zielony commit z 'dev' (przy dispatchu: biezacy ref).
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          # Zawsze buduj AKTUALNY szczyt 'dev' — unikamy wyscigu workflow_run.head_sha,
+          # ktory potrafil wdrozyc starszy commit (deploy bral commit tego CI, ktore
+          # skonczylo ostatnie, a nie najnowszy). Job i tak wykonuje sie w kontekscie
+          # 'main' (workflow_run), wiec przechodzi regule srodowiska github-pages.
+          ref: dev
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
