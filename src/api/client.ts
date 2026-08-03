@@ -113,11 +113,12 @@ export class ApiClient {
       if (controller.signal.aborted) {
         throw new ApiError(
           0,
-          `Serwer nie odpowiada (przekroczono ${Math.round(timeoutMs / 1000)} s). Spróbuj ponownie.`,
+          `Serwer nie odpowiada (${this.baseUrl}, przekroczono ${Math.round(timeoutMs / 1000)} s). Spróbuj ponownie.`,
         );
       }
       // Pozostałe błędy sieci (brak internetu, DNS, TLS) — czytelny komunikat zamiast surowego wyjątku.
-      throw new ApiError(0, "Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie.");
+      // Adres w komunikacie = diagnostyka: od razu widać, pod jaki backend bije apka.
+      throw new ApiError(0, `Brak połączenia z serwerem (${this.baseUrl}). Sprawdź internet i spróbuj ponownie.`);
     } finally {
       clearTimeout(timer);
     }
