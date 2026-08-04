@@ -116,9 +116,14 @@ export class ApiClient {
           `Serwer nie odpowiada (${this.baseUrl}, przekroczono ${Math.round(timeoutMs / 1000)} s). Spróbuj ponownie.`,
         );
       }
-      // Pozostałe błędy sieci (brak internetu, DNS, TLS) — czytelny komunikat zamiast surowego wyjątku.
-      // Adres w komunikacie = diagnostyka: od razu widać, pod jaki backend bije apka.
-      throw new ApiError(0, `Brak połączenia z serwerem (${this.baseUrl}). Sprawdź internet i spróbuj ponownie.`);
+      // Pozostałe błędy sieci (brak internetu, DNS, TLS, CORS, mixed-content) — pokazujemy
+      // adres ORAZ surowy powód z przeglądarki (name: message), żeby dało się zdiagnozować
+      // dokładną przyczynę zamiast zgadywać spod ogólnego komunikatu.
+      const reason = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+      throw new ApiError(
+        0,
+        `Brak połączenia z serwerem (${this.baseUrl}) [${reason}]. Sprawdź internet i spróbuj ponownie.`,
+      );
     } finally {
       clearTimeout(timer);
     }
