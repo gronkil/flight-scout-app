@@ -56,7 +56,11 @@ export class ApiClient {
   constructor(config: ApiConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.getAuth = config.getAuth ?? (() => null);
-    this.fetchFn = config.fetchFn ?? fetch;
+    // WAŻNE (web): przeglądarkowy `fetch` MUSI być wołany z this === window/globalThis.
+    // Trzymany jako `this.fetchFn` i wołany przez `this.fetchFn(...)` dostaje this = ApiClient
+    // → w przeglądarce rzuca „TypeError: Illegal invocation" (natywny RN-owy fetch to toleruje,
+    // dlatego apka natywna działała, a web NIE). Bind do globalThis naprawia to wszędzie.
+    this.fetchFn = config.fetchFn ?? fetch.bind(globalThis);
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
