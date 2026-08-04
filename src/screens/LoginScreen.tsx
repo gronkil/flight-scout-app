@@ -110,6 +110,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
         onChangeText={setEmail}
         autoCapitalize="none"
         autoComplete="email"
+        textContentType="emailAddress"
         keyboardType="email-address"
         placeholder={t.login.emailPlaceholder}
         accessibilityLabel={t.login.email}
@@ -122,6 +123,8 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
         onChangeText={setPassword}
         autoCapitalize="none"
         secureTextEntry
+        autoComplete={mode === "register" ? "password-new" : "current-password"}
+        textContentType={mode === "register" ? "newPassword" : "password"}
         placeholder={mode === "register" ? t.login.passwordPlaceholderRegister : t.login.passwordPlaceholderLogin}
         accessibilityLabel={t.login.password}
       />
