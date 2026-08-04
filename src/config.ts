@@ -1,5 +1,6 @@
 // Konfiguracja klienta. Bez sekretów w kodzie — baseUrl konfigurowalny, token z logowania.
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 
 // Adres API używany, gdy konfiguracja z app.json (extra.apiBaseUrl) nie jest dostępna.
 // WAŻNE (web): w statycznym eksporcie web `Constants.expoConfig` bywa pusty i wtedy apka
@@ -21,7 +22,14 @@ export function configuredBaseUrl(): string {
 
 // W produkcji nadpisz przez ekran ustawień lub app.json extra.apiBaseUrl.
 export function resolveBaseUrl(override?: string | null): string {
-  return (override && override.trim()) || DEFAULT_API_BASE_URL;
+  const url = (override && override.trim()) || DEFAULT_API_BASE_URL;
+  // Twardy guard: wersja WEB NIGDY nie może bić w loopback telefonu użytkownika. Gdyby
+  // konfiguracja (stary cache, pomyłka) wskazywała localhost/127.0.0.1 — wymuś produkcyjny
+  // backend. Natywny dev pod localhost nietknięty (guard tylko dla Platform.OS === "web").
+  if (Platform.OS === "web" && /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(url)) {
+    return DEFAULT_API_BASE_URL;
+  }
+  return url;
 }
 
 // Identyfikatory klienta Google (opcjonalne). Ustawiasz raz w app.json → extra.google

@@ -69,8 +69,12 @@ jobs:
             const j=JSON.parse(fs.readFileSync(p,'utf8'));
             j.expo.experiments = j.expo.experiments || {};
             j.expo.experiments.baseUrl = '/${{ github.event.repository.name }}';
+            // Wbij adres API na sztywno w manifest builda web — bundle nie zależy już od
+            // fallbacku w config.ts (na web Constants.expoConfig bywa pusty).
+            j.expo.extra = j.expo.extra || {};
+            j.expo.extra.apiBaseUrl = 'https://flight-scout-api.onrender.com';
             fs.writeFileSync(p, JSON.stringify(j,null,2));
-            console.log('baseUrl =', j.expo.experiments.baseUrl);
+            console.log('baseUrl =', j.expo.experiments.baseUrl, 'api =', j.expo.extra.apiBaseUrl);
           "
 
       - name: Zbuduj strone (expo export, web)
