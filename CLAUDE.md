@@ -24,6 +24,33 @@ własnoręcznie. Awans do `main` i build APK zrobi się sam, o ile CI przejdzie.
 Jeśli użytkownik wprost każe pushnąć na `main` mimo tej reguły — dopytaj, bo to
 obejście automatyki; domyślnie zawsze celuj w `dev`.
 
+## ⛔ GitHub Actions są WYŁĄCZONE
+
+Na życzenie właściciela repo **wszystkie workflowy mają usunięte automatyczne
+wyzwalacze** (`push`, `pull_request`, `schedule`, `workflow_run`). Zostało wyłącznie
+ręczne uruchomienie (`workflow_dispatch`), więc **nic nie startuje samo**:
+
+| Workflow | Co robił | Stan |
+| --- | --- | --- |
+| `ci.yml` | typy + testy + bundle na push do `dev`/`main` i na PR | tylko ręcznie |
+| `apk.yml` | awans `main` + build APK + Release po zielonym CI | tylko ręcznie |
+| `web.yml` | deploy wersji web na GitHub Pages po zielonym CI | tylko ręcznie |
+| `keepalive.yml` | ping API co 5 min (Render nie zasypia) | tylko ręcznie |
+
+Konsekwencje, o których trzeba pamiętać:
+
+- **`main` nie awansuje się sama** — opis pipeline'u niżej jest nieaktywny.
+- **APK nie powstaje** po pushu na `dev`; trzeba odpalić `apk.yml` ręcznie.
+- **Web nie wdraża się** na GitHub Pages.
+- **API na Renderze będzie zasypiać** po ~15 min → pierwsze wejście do apki
+  to cold start 30–50 s i feed wygląda jakby nie działał.
+
+Przywrócenie: w każdym pliku w `.github/workflows/` odkomentuj blok
+„Oryginalne wyzwalacze (wyłączone)”. Twardy wyłącznik całych Actions dla repo jest
+osobno w *Settings → Actions → General → Actions permissions*.
+
+Opis poniżej zostawiony jako dokumentacja tego, jak pipeline działa **po włączeniu**.
+
 ## Pipeline (jak to działa)
 
 ```

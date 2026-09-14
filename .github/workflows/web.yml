@@ -1,5 +1,11 @@
 name: Deploy web (GitHub Pages)
 
+# ⛔ WYLACZONE (na zyczenie wlasciciela repo).
+# Wszystkie automatyczne wyzwalacze tego workflowa zostaly usuniete — nie uruchomi
+# sie sam ani z pusha, ani z harmonogramu, ani po innym workflowie. Zostaje wylacznie
+# reczne uruchomienie (Actions -> ten workflow -> "Run workflow").
+# Aby przywrocic automatyke: odkomentuj oryginalny blok 'on:' ponizej.
+
 # Publikuje wersje webowa aplikacji (Expo Web / react-native-web) na GitHub Pages,
 # zeby uzytkownicy iPhone mogli korzystac z apki przez przegladarke — bez App Store
 # i bez konta Apple Developer. Ta sama apka (logowanie, feed, profile), responsywnie.
@@ -13,10 +19,11 @@ name: Deploy web (GitHub Pages)
 # regule bez zadnych recznych zmian w ustawieniach srodowiska. Kod do zbudowania
 # bierzemy z dokladnie tego zielonego commita z 'dev' (checkout head_sha).
 on:
-  workflow_run:
-    workflows: ["CI (Expo/RN)"]
-    types: [completed]
   workflow_dispatch: {}
+# Oryginalne wyzwalacze (wylaczone):
+#  workflow_run:
+#    workflows: ["CI (Expo/RN)"]
+#    types: [completed]
 
 permissions:
   contents: read

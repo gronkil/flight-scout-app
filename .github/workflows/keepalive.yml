@@ -1,5 +1,11 @@
 name: Keep API warm
 
+# ⛔ WYLACZONE (na zyczenie wlasciciela repo).
+# Wszystkie automatyczne wyzwalacze tego workflowa zostaly usuniete — nie uruchomi
+# sie sam ani z pusha, ani z harmonogramu, ani po innym workflowie. Zostaje wylacznie
+# reczne uruchomienie (Actions -> ten workflow -> "Run workflow").
+# Aby przywrocic automatyke: odkomentuj oryginalny blok 'on:' ponizej.
+
 # Render (darmowy tier) usypia usługę po ~15 min bezczynności — pierwsze wejście do
 # aplikacji budzi ją (cold start 30-50 s) i feed wygląda jakby "nie działał".
 # Ten workflow pinguje API co ~10 min, żeby serwer nie zasypiał i apka ładowała się od ręki.
@@ -8,11 +14,12 @@ name: Keep API warm
 # Nie wymaga żadnych sekretów ani dostępu do repo backendu.
 
 on:
-  schedule:
-    # Co 5 minut. GitHub bywa, że opóźnia schedule, więc gęstszy ping mocniej trzyma
-    # usługę "na ciepło" (Render usypia po ~15 min bezczynności).
-    - cron: "*/5 * * * *"
   workflow_dispatch: {}
+# Oryginalne wyzwalacze (wylaczone):
+#  schedule:
+#    # Co 5 minut. GitHub bywa, ze opoznia schedule, wiec gestszy ping mocniej trzyma
+#    # usluge "na cieplo" (Render usypia po ~15 min bezczynnosci).
+#    - cron: "*/5 * * * *"
 
 permissions:
   contents: read

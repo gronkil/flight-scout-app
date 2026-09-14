@@ -1,13 +1,21 @@
 name: CI (Expo/RN)
 
+# ⛔ WYLACZONE (na zyczenie wlasciciela repo).
+# Wszystkie automatyczne wyzwalacze tego workflowa zostaly usuniete — nie uruchomi
+# sie sam ani z pusha, ani z harmonogramu, ani po innym workflowie. Zostaje wylacznie
+# reczne uruchomienie (Actions -> ten workflow -> "Run workflow").
+# Aby przywrocic automatyke: odkomentuj oryginalny blok 'on:' ponizej.
+
 # Bramka jakości aplikacji: typy (TS strict) + testy rdzenia (Vitest) + bundle.
 #
 # PRACUJEMY NA GALEZI 'dev'. Gdy CI na 'dev' przejdzie na zielono, workflow
 # "Release (dev -> main + APK)" automatycznie awansuje 'main' i zbuduje APK.
 on:
-  push:
-    branches: [dev, main]
-  pull_request:
+  workflow_dispatch: {}
+# Oryginalne wyzwalacze (wylaczone):
+#  push:
+#    branches: [dev, main]
+#  pull_request:
 
 permissions:
   contents: read

@@ -1,5 +1,11 @@
 name: Release (dev -> main + APK)
 
+# ⛔ WYLACZONE (na zyczenie wlasciciela repo).
+# Wszystkie automatyczne wyzwalacze tego workflowa zostaly usuniete — nie uruchomi
+# sie sam ani z pusha, ani z harmonogramu, ani po innym workflowie. Zostaje wylacznie
+# reczne uruchomienie (Actions -> ten workflow -> "Run workflow").
+# Aby przywrocic automatyke: odkomentuj oryginalny blok 'on:' ponizej.
+
 # Pipeline promocyjny BEZ zadnych sekretow.
 #
 # PRZEPLYW:
@@ -20,10 +26,11 @@ name: Release (dev -> main + APK)
 # APK: podpisany stalym kluczem debug z szablonu Expo (kolejne wersje instaluja
 # sie NA WIERZCH), versionCode = numer uruchomienia (rosnie).
 on:
-  workflow_run:
-    workflows: ["CI (Expo/RN)"]
-    types: [completed]
   workflow_dispatch: {}
+# Oryginalne wyzwalacze (wylaczone):
+#  workflow_run:
+#    workflows: ["CI (Expo/RN)"]
+#    types: [completed]
 
 permissions:
   contents: write   # awans 'main' + utworzenie Release z plikiem APK
